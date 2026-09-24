@@ -1,0 +1,12 @@
+.env.example
+node_modules/
+dist/
+build/
+*.log
+.git/
+.gitignore
+.vscode/
+.idea/
+Dockerfile
+docker-compose.yml
+nginx.conf
