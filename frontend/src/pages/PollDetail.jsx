@@ -23,10 +23,9 @@ export default function PollDetail() {
       const res = await pollAPI.getOne(id)
       if (res.pollId) {
         setPoll(res)
-        if (res.userVoted || res.totalVotes > 0) {
-          setHasVoted(true)
-          setShowResults(true)
-        }
+        // Only show voted state if THIS specific viewer has voted
+        setHasVoted(!!res.userVoted)
+        setShowResults(!!res.userVoted)
       } else {
         toast.error('Poll not found')
         navigate('/')

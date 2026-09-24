@@ -45,8 +45,30 @@ export const pollAPI = {
   getAll: () =>
     fetch(`${API_URL}/polls`).then(res => res.json()),
 
-  getOne: (id) =>
-    fetch(`${API_URL}/polls/${id}`).then(res => res.json()),
+  getOne: (id) => {
+    // Send voter ID so backend can check if THIS viewer has voted
+    let voterId = ''
+    try {
+      const token = localStorage.getItem('token')
+      if (token) {
+        const payload = token.split('.')[1]
+        const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
+        const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=')
+        const decoded = JSON.parse(atob(padded))
+        voterId = 'user_' + decoded.userId
+      }
+      if (!voterId) {
+        voterId = localStorage.getItem('pollaris_voter_id') || ''
+      }
+    } catch {
+      // ignore
+    }
+
+    const headers = {}
+    if (voterId) headers['X-Voter-Id'] = voterId
+
+    return fetch(`${API_URL}/polls/${id}`, { headers }).then(res => res.json())
+  },
 
   getMy: (token) =>
     fetch(`${API_URL}/polls/my`, {

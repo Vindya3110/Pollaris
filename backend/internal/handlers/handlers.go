@@ -314,11 +314,26 @@ func GetPoll(c *gin.Context) {
 
 	results, total := services.GetPollResults(poll.ID.Hex(), poll.Options)
 
-	c.JSON(http.StatusOK, models.PollResult{
-		PollID:     poll.ID.Hex(),
-		Question:   poll.Question,
-		TotalVotes: total,
-		Options:    results,
+	// Check if THIS viewer has already voted
+	voterID := c.GetHeader("X-Voter-Id")
+	if voterID == "" {
+		if cookieVal, err := c.Cookie(utils.VOTER_COOKIE_NAME); err == nil && cookieVal != "" {
+			voterID = cookieVal
+		}
+	}
+	userVoted := false
+	if voterID != "" {
+		userVoted, _ = services.HasVoted(poll.ID.Hex(), voterID)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"pollId":     poll.ID.Hex(),
+		"question":   poll.Question,
+		"totalVotes": total,
+		"userVoted":  userVoted,
+		"options":    results,
+		"isActive":   poll.IsActive,
+		"createdAt":  poll.CreatedAt,
 	})
 }
 
