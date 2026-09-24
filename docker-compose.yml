@@ -10,11 +10,21 @@ services:
       - mongo_data:/data/db
 
   redis:
-    image: redis:7-alpine
+    image: redis:7
     container_name: pollaris-redis
     restart: always
-    # No external port mapping — only backend (same network) needs access
-    command: redis-server --appendonly yes
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync always
+      --save 60 1
+      --save 30 5
+      --save 10 1000
+      --no-appendfsync-on-rewrite no
+      --auto-aof-rewrite-percentage 100
+      --auto-aof-rewrite-min-size 64mb
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
 

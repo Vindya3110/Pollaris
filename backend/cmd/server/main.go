@@ -45,6 +45,12 @@ func main() {
 	defer database.GetRedis().Close()
 	services.InitRedis(redisClient)
 
+	// Rebuild Redis vote counters from MongoDB on startup
+	// This ensures live counts survive Redis restarts / container recreations
+	if err := services.RebuildRedisFromMongo(); err != nil {
+		log.Printf("Warning: failed to rebuild Redis from MongoDB: %v", err)
+	}
+
 	// Init JWT
 	utils.InitJWT(jwtSecret)
 

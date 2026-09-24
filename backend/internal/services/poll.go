@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"pollaris/internal/models"
+	"pollaris/internal/repository"
 
 	"github.com/gorilla/websocket"
 	"github.com/redis/go-redis/v9"
@@ -111,4 +112,61 @@ func GetPollResults(pollID string, options []models.PollOption) ([]models.VoteRe
 	}
 
 	return results, total
+}
+
+// RebuildRedisFromMongo rebuilds Redis vote counters from MongoDB.
+// Call this on startup after connecting to both MongoDB and Redis.
+// This ensures live counts survive Redis restarts / container recreations.
+func RebuildRedisFromMongo() error {
+	ctx := context.Background()
+
+	// Get all poll IDs
+	pollIDs, err := repository.GetAllPollIDs(ctx)
+	if err != nil {
+		return err
+	}
+
+	rebuilt := 0
+	for _, pollID := range pollIDs {
+		// Load all votes for this poll from MongoDB
+		votes, err := repository.GetVotesForPoll(ctx, pollID)
+		if err != nil {
+			continue
+		}
+
+		if len(votes) == 0 {
+			continue
+		}
+
+		// Count votes per option
+		optionCounts := make(map[string]int64)
+		voterSet := make(map[string]bool)
+		for _, v := range votes {
+			optionCounts[v.OptionID.Hex()]++
+			voterSet[v.VoterID] = true
+		}
+
+		// Write to Redis with a pipeline for speed
+		pipe := Rdb.Pipeline()
+		for optID, count := range optionCounts {
+			key := "poll:" + pollID + ":opt:" + optID
+			pipe.Set(ctx, key, count, 0) // no expiry — persistent
+		}
+
+		// Restore voter set
+		voterKey := "poll:" + pollID + ":voters"
+		for voterID := range voterSet {
+			pipe.SAdd(ctx, voterKey, voterID)
+		}
+		pipe.Expire(ctx, voterKey, 0) // no expiry
+
+		_, _ = pipe.Exec(ctx)
+		rebuilt++
+	}
+
+	if rebuilt > 0 {
+		println("[Redis] Rebuilt vote counts from MongoDB for", rebuilt, "poll(s)")
+	}
+
+	return nil
 }

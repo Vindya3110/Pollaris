@@ -190,3 +190,44 @@ func CreateVote(ctx context.Context, vote *models.Vote) error {
 	vote.ID = result.InsertedID.(primitive.ObjectID)
 	return nil
 }
+
+// GetVotesForPoll returns all votes for a given poll (used to rebuild Redis on restart)
+func GetVotesForPoll(ctx context.Context, pollID string) ([]models.Vote, error) {
+	pollOID, err := primitive.ObjectIDFromHex(pollID)
+	if err != nil {
+		return nil, err
+	}
+	cursor, err := database.GetDB().Collection("votes").Find(ctx, bson.M{"pollId": pollOID})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var votes []models.Vote
+	if err := cursor.All(ctx, &votes); err != nil {
+		return nil, err
+	}
+	return votes, nil
+}
+
+// GetAllPollIDs returns IDs of all polls
+func GetAllPollIDs(ctx context.Context) ([]string, error) {
+	cursor, err := database.GetDB().Collection("polls").Find(ctx, bson.M{}, options.Find().SetProjection(bson.M{"_id": 1}))
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var results []struct {
+		ID primitive.ObjectID `bson:"_id"`
+	}
+	if err := cursor.All(ctx, &results); err != nil {
+		return nil, err
+	}
+
+	ids := make([]string, len(results))
+	for i, r := range results {
+		ids[i] = r.ID.Hex()
+	}
+	return ids, nil
+}
