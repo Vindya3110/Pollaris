@@ -4,29 +4,35 @@ const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
-  const [token, setToken] = useState(localStorage.getItem('token'))
+  const [token, setToken] = useState(() => localStorage.getItem('token'))
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (token) {
-      // Verify token with backend
       fetch('/api/auth/me', {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then(res => {
           if (!res.ok) {
+            // Token expired or invalid — clean up
             localStorage.removeItem('token')
+            localStorage.removeItem('user')
             setToken(null)
-          } else {
-            return res.json()
+            setUser(null)
+            return null
           }
+          return res.json()
         })
         .then(data => {
-          if (data) setUser(data)
+          if (data && data.id) {
+            setUser(data)
+          }
         })
         .catch(() => {
           localStorage.removeItem('token')
+          localStorage.removeItem('user')
           setToken(null)
+          setUser(null)
         })
         .finally(() => setLoading(false))
     } else {

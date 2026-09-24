@@ -40,14 +40,26 @@ function CreatePollForm() {
       return
     }
 
-    setLoading(true)
-    const res = await pollAPI.create({ question, options: filteredOptions }, token)
+    if (question.trim().length < 3) {
+      toast.error('Question must be at least 3 characters')
+      return
+    }
 
-    if (res.id) {
-      toast.success('Poll created!')
-      navigate(`/poll/${res.id}`)
-    } else {
-      toast.error(res.error || 'Failed to create poll')
+    setLoading(true)
+    try {
+      const res = await pollAPI.create({ question, options: filteredOptions }, token)
+
+      if (res.id) {
+        toast.success('Poll created!')
+        navigate(`/poll/${res.id}`)
+      } else {
+        const errMsg = res.error || 'Failed to create poll'
+        toast.error(errMsg)
+        console.error('Create poll failed:', res)
+      }
+    } catch (err) {
+      toast.error('Network error. Please try again.')
+      console.error('Create poll error:', err)
     }
     setLoading(false)
   }
