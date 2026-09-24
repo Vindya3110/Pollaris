@@ -53,11 +53,11 @@ export default function Home() {
       </section>
 
       {/* How it works */}
-      <section className="py-24 bg-white">
+      <section className="py-24" style={{ background: 'linear-gradient(180deg, #24243e 0%, #1a1a2e 100%)' }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16 animate-fade-in-up">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">How It Works</h2>
-            <p className="text-gray-500 max-w-xl mx-auto text-lg">Three simple steps to engage your audience with live, real-time polling.</p>
+            <h2 className="text-4xl font-bold text-white mb-4">How It Works</h2>
+            <p className="text-indigo-200/60 max-w-xl mx-auto text-lg">Three simple steps to engage your audience with live, real-time polling.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -87,9 +87,9 @@ export default function Home() {
                     {item.icon}
                   </div>
                 </div>
-                <div className="text-sm font-bold text-indigo-600 mb-2 tracking-wider">STEP {item.step}</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">{item.title}</h3>
-                <p className="text-gray-500 leading-relaxed">{item.desc}</p>
+                <div className="text-sm font-bold text-indigo-400 mb-2 tracking-wider">STEP {item.step}</div>
+                <h3 className="text-xl font-bold text-white mb-3">{item.title}</h3>
+                <p className="text-indigo-200/50 leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -97,42 +97,42 @@ export default function Home() {
       </section>
 
       {/* Features */}
-      <section className="py-24 bg-gray-50/50">
+      <section className="py-24" style={{ background: 'linear-gradient(180deg, #1a1a2e 0%, #16213e 100%)' }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Built for Live Engagement</h2>
-            <p className="text-gray-500 max-w-xl mx-auto text-lg">Everything you need for audience polling, powered by a robust real-time stack.</p>
+            <h2 className="text-4xl font-bold text-white mb-4">Built for Live Engagement</h2>
+            <p className="text-indigo-200/60 max-w-xl mx-auto text-lg">Everything you need for audience polling, powered by a robust real-time stack.</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               {
-                icon: <Zap className="w-6 h-6 text-indigo-600" />,
+                icon: <Zap className="w-6 h-6 text-indigo-400" />,
                 title: 'Truly Real-Time',
                 desc: 'WebSocket-powered live updates. Results animate instantly as votes arrive — no polling, no refresh.',
               },
               {
-                icon: <Share2 className="w-6 h-6 text-indigo-600" />,
+                icon: <Share2 className="w-6 h-6 text-indigo-400" />,
                 title: 'Shareable Links',
                 desc: 'Copy the unique poll link and share it anywhere — chat, email, social media. Anyone with the link can vote.',
               },
               {
-                icon: <BarChart3 className="w-6 h-6 text-indigo-600" />,
+                icon: <BarChart3 className="w-6 h-6 text-indigo-400" />,
                 title: 'Live Bar Charts',
                 desc: 'Animated bar charts show vote distribution in real-time. See the lead change as votes come in.',
               },
               {
-                icon: <Settings className="w-6 h-6 text-indigo-600" />,
+                icon: <Settings className="w-6 h-6 text-indigo-400" />,
                 title: 'Creator Dashboard',
                 desc: 'Manage all your polls from one place. Activate, deactivate, or delete polls anytime.',
               },
               {
-                icon: <Shield className="w-6 h-6 text-indigo-600" />,
+                icon: <Shield className="w-6 h-6 text-indigo-400" />,
                 title: 'Google Sign-In',
                 desc: 'Sign in with email or your Google account. Quick setup, no password to remember.',
               },
               {
-                icon: <Users className="w-6 h-6 text-indigo-600" />,
+                icon: <Users className="w-6 h-6 text-indigo-400" />,
                 title: 'Multi-Account Voting',
                 desc: 'Different accounts on the same device each get their own vote, so collaborators can vote independently.',
               },
@@ -145,8 +145,8 @@ export default function Home() {
                 <div className="feature-icon w-12 h-12 rounded-xl flex items-center justify-center mb-4">
                   {feature.icon}
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">{feature.title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">{feature.desc}</p>
+                <h3 className="text-lg font-bold text-white mb-2">{feature.title}</h3>
+                <p className="text-indigo-200/50 text-sm leading-relaxed">{feature.desc}</p>
               </div>
             ))}
           </div>
@@ -166,8 +166,8 @@ export default function Home() {
               ].map((stat) => (
                 <div key={stat.label}>
                   <div className="text-2xl md:text-3xl font-bold gradient-text mb-1">{stat.value}</div>
-                  <div className="text-sm font-medium text-gray-700 mb-1">{stat.label}</div>
-                  <div className="text-xs text-gray-400">{stat.sub}</div>
+                  <div className="text-sm font-medium text-gray-300 mb-1">{stat.label}</div>
+                  <div className="text-xs text-gray-500">{stat.sub}</div>
                 </div>
               ))}
             </div>
@@ -179,7 +179,7 @@ export default function Home() {
       <section className="py-24">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl font-bold text-white mb-4">Ready to go live?</h2>
-          <p className="text-indigo-200/70 mb-10 text-lg">Create your first poll in under a minute.</p>
+          <p className="text-indigo-200/60 mb-10 text-lg">Create your first poll in under a minute.</p>
           {user ? (
             <Link
               to="/create"
@@ -203,7 +203,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-white/10 py-10">
         <div className="max-w-5xl mx-auto px-4 text-center">
-          <p className="text-indigo-300/50 text-sm">
+          <p className="text-indigo-300/40 text-sm">
             Pollaris — Live Polling Tool. Built with React, Go, MongoDB & Redis.
           </p>
         </div>
