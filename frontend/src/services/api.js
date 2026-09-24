@@ -53,15 +53,34 @@ export const pollAPI = {
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => res.json()),
 
-  vote: (data, token) =>
-    fetch(`${API_URL}/polls/vote`, {
+  vote: (data, token) => {
+    // Generate per-browser voter ID so different browsers = different voters
+    let voterId
+    try {
+      voterId = localStorage.getItem('pollaris_voter_id')
+      if (!voterId) {
+        voterId = 'v_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10)
+        localStorage.setItem('pollaris_voter_id', voterId)
+      }
+    } catch {
+      // localStorage unavailable (private mode etc.)
+      voterId = ''
+    }
+
+    const headers = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    }
+    if (voterId) {
+      headers['X-Voter-Id'] = voterId
+    }
+
+    return fetch(`${API_URL}/polls/vote`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
       body: JSON.stringify(data),
-    }).then(res => res.json()),
+    }).then(res => res.json())
+  },
 
   toggle: (id, isActive, token) =>
     fetch(`${API_URL}/polls/${id}/toggle`, {

@@ -413,10 +413,18 @@ func Vote(c *gin.Context) {
 		return
 	}
 
-	// Generate voter ID from IP + User-Agent
-	ip := c.ClientIP()
-	userAgent := c.GetHeader("User-Agent")
-	voterID := utils.GenerateVoterID(ip, userAgent)
+	// Get voter ID from: X-Voter-Id header > cookie > IP+UA fallback
+	voterID := c.GetHeader("X-Voter-Id")
+	if voterID == "" {
+		if cookieVal, err := c.Cookie(utils.VOTER_COOKIE_NAME); err == nil && cookieVal != "" {
+			voterID = cookieVal
+		} else {
+			// Fallback: generate from IP + User-Agent
+			ip := c.ClientIP()
+			userAgent := c.GetHeader("User-Agent")
+			voterID = utils.GenerateVoterID(ip, userAgent)
+		}
+	}
 
 	// Check for duplicate vote
 	hasVoted, _ := repository.HasUserVoted(c, pollID, voterID)

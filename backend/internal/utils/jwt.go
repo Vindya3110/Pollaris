@@ -10,6 +10,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+const VOTER_COOKIE_NAME = "pollaris_voter"
+
 var jwtSecretKey []byte
 
 // InitJWT sets the JWT signing key
@@ -69,9 +71,14 @@ func CheckPassword(hashed, password string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashed), []byte(password))
 }
 
-// GenerateVoterID creates a unique voter ID from IP + User-Agent
+// GenerateVoterID creates a voter ID from IP + User-Agent (kept for backward compat)
 func GenerateVoterID(ip, userAgent string) string {
 	raw := strings.TrimSpace(ip) + "|" + strings.TrimSpace(userAgent)
 	hash := md5.Sum([]byte(raw))
 	return fmt.Sprintf("voter_%x", hash[:8])
+}
+
+// GenerateRandomVoterID creates a random voter ID for cookie-based tracking
+func GenerateRandomVoterID() string {
+	return fmt.Sprintf("voter_%x", md5.Sum([]byte(fmt.Sprintf("%d", time.Now().UnixNano()))))
 }
