@@ -21,13 +21,6 @@ export default function Navbar() {
           </Link>
 
           <div className="flex items-center gap-4">
-            <Link
-              to="/polls"
-              className="text-gray-600 hover:text-indigo-600 font-medium transition-colors"
-            >
-              Browse Polls
-            </Link>
-
             {user ? (
               <>
                 <Link

@@ -15,6 +15,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -497,6 +498,55 @@ func TogglePoll(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"success": true, "isActive": newStatus})
+}
+
+// DeletePoll deletes a poll and all its votes (only by the creator)
+func DeletePoll(c *gin.Context) {
+	pollID := c.Param("id")
+	userID := c.GetString("userId")
+
+	poll, err := repository.FindPollByID(c, pollID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, models.APIError{Error: "Poll not found"})
+		return
+	}
+
+	creatorOID, _ := primitive.ObjectIDFromHex(userID)
+	if poll.CreatedBy != creatorOID {
+		c.JSON(http.StatusForbidden, models.APIError{Error: "You can only delete your own polls"})
+		return
+	}
+
+	// Delete all votes for this poll from MongoDB
+	pollOID, _ := primitive.ObjectIDFromHex(pollID)
+	_, _ = database.GetDB().Collection("votes").DeleteMany(c, bson.M{"pollId": pollOID})
+
+	// Delete the poll from MongoDB
+	_, err = database.GetDB().Collection("polls").DeleteOne(c, bson.M{"_id": pollOID})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.APIError{Error: "Failed to delete poll"})
+		return
+	}
+
+	// Delete Redis counters and voter sets
+	ctx := context.Background()
+	optionKeys, _ := database.GetRedis().Keys(ctx, "poll:"+pollID+":opt:*").Result()
+	if len(optionKeys) > 0 {
+		_ = database.GetRedis().Del(ctx, optionKeys...)
+	}
+	_ = database.GetRedis().Del(ctx, "poll:"+pollID+":voters")
+
+	// Notify all WebSocket clients watching this poll that it's gone
+	services.BroadcastUpdate(pollID, gin.H{
+		"type":      "poll_deleted",
+		"pollId":    pollID,
+		"success":   true,
+		"message":   "This poll has been deleted",
+		"totalVotes": 0,
+		"options":   []models.VoteResult{},
+	})
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Poll deleted"})
 }
 
 // --- WebSocket Handler ---

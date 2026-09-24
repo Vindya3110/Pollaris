@@ -82,6 +82,7 @@ func main() {
 		authPolls.POST("", createPollHandler)
 		authPolls.GET("/my", getMyPollsHandler)
 		authPolls.PUT("/:id/toggle", togglePollHandler)
+		authPolls.DELETE("/:id", deletePollHandler)
 	}
 
 	// WebSocket
@@ -126,5 +127,6 @@ var (
 	getMyPollsHandler = gin.HandlerFunc(handlers.GetMyPolls)
 	voteHandler      = gin.HandlerFunc(handlers.Vote)
 	togglePollHandler = gin.HandlerFunc(handlers.TogglePoll)
+	deletePollHandler = gin.HandlerFunc(handlers.DeletePoll)
 	serveWSHandler   = gin.HandlerFunc(handlers.ServeWS)
 )

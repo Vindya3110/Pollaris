@@ -41,6 +41,12 @@ export default function PollDetail() {
     if (msg.type === 'poll_update') {
       setWsConnected(true)
       const payload = msg.payload
+      // Check if this is a deletion notice
+      if (payload.type === 'poll_deleted' || msg.payload?.type === 'poll_deleted') {
+        toast.error('This poll has been deleted by its creator')
+        setTimeout(() => navigate('/'), 2000)
+        return
+      }
       setPoll((prev) => ({
         ...prev,
         totalVotes: payload.totalVotes,
@@ -49,7 +55,7 @@ export default function PollDetail() {
     } else if (msg.type === 'welcome') {
       setWsConnected(true)
     }
-  }, [])
+  }, [navigate])
 
   // Custom WebSocket hook inline
   useEffect(() => {

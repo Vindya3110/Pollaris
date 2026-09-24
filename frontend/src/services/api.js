@@ -104,6 +104,12 @@ export const pollAPI = {
       },
       body: JSON.stringify({ isActive }),
     }).then(res => res.json()),
+
+  delete: (id, token) =>
+    fetch(`${API_URL}/polls/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    }).then(res => res.json()),
 }
 
 export function useWebSocket(pollId, onMessage) {
