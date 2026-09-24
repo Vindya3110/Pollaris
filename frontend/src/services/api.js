@@ -54,16 +54,25 @@ export const pollAPI = {
     }).then(res => res.json()),
 
   vote: (data, token) => {
-    // Generate per-browser voter ID so different browsers = different voters
-    let voterId
+    // Priority for voter ID:
+    // 1. Authenticated user's account ID — so two different accounts
+    //    in the same browser each get their own vote
+    // 2. Browser-based localStorage ID — for anonymous voters,
+    //    distinguishes different browsers/devices
+    let voterId = ''
     try {
-      voterId = localStorage.getItem('pollaris_voter_id')
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        voterId = 'user_' + payload.userId
+      }
       if (!voterId) {
-        voterId = 'v_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10)
-        localStorage.setItem('pollaris_voter_id', voterId)
+        voterId = localStorage.getItem('pollaris_voter_id')
+        if (!voterId) {
+          voterId = 'v_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10)
+          localStorage.setItem('pollaris_voter_id', voterId)
+        }
       }
     } catch {
-      // localStorage unavailable (private mode etc.)
       voterId = ''
     }
 
