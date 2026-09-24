@@ -1,15 +1,24 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { authAPI } from '../services/api'
 import toast from 'react-hot-toast'
 import Navbar from '../components/Navbar'
+import { useGoogleLogin } from '../hooks/useGoogleLogin'
 
 export default function Register() {
   const [formData, setFormData] = useState({ name: '', email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
+  const { initGoogle } = useGoogleLogin()
+
+  useEffect(() => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+    if (clientId) {
+      initGoogle('google-register-btn', clientId)
+    }
+  }, [initGoogle])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -26,6 +35,8 @@ export default function Register() {
     setLoading(false)
   }
 
+  const hasGoogleClient = !!import.meta.env.VITE_GOOGLE_CLIENT_ID
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -33,6 +44,20 @@ export default function Register() {
         <div className="glass rounded-2xl shadow-2xl p-8 w-full max-w-md">
           <h2 className="text-3xl font-bold text-gray-800 mb-2">Create Account</h2>
           <p className="text-gray-600 mb-6">Join Pollaris and start creating polls</p>
+
+          {hasGoogleClient && (
+            <>
+              <div id="google-register-btn" className="flex justify-center mb-4"></div>
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white/60 text-gray-500">Or sign up with email</span>
+                </div>
+              </div>
+            </>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -78,9 +103,15 @@ export default function Register() {
               disabled={loading}
               className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50"
             >
-              {loading ? 'Creating Account...' : 'Sign Up'}
+              {loading ? 'Creating Account...' : 'Sign Up with Email'}
             </button>
           </form>
+
+          {!hasGoogleClient && (
+            <div className="mt-6 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
+              💡 Add <code>VITE_GOOGLE_CLIENT_ID</code> to <code>.env</code> to enable Google Sign-In.
+            </div>
+          )}
 
           <p className="mt-6 text-center text-gray-600">
             Already have an account?{' '}

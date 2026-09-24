@@ -23,6 +23,11 @@ func CreateUserIndexes() {
 		Keys:    bson.D{{Key: "email", Value: 1}},
 		Options: options.Index().SetUnique(true),
 	})
+	// Unique index on googleId (sparse so it only applies to Google users)
+	_, _ = database.GetDB().Collection("users").Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys:    bson.D{{Key: "googleId", Value: 1}},
+		Options: options.Index().SetUnique(true).SetSparse(true),
+	})
 }
 
 // CreatePollIndexes creates indexes on the polls collection
@@ -72,6 +77,27 @@ func FindUserByID(ctx context.Context, id string) (*models.User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+// FindUserByGoogleID finds a user by their Google sub claim
+func FindUserByGoogleID(ctx context.Context, googleID string) (*models.User, error) {
+	var user models.User
+	if err := database.GetDB().Collection("users").FindOne(ctx, bson.M{"googleId": googleID}).Decode(&user); err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// UpdateUserGoogleInfo attaches google identity fields to an existing email/password user
+func UpdateUserGoogleInfo(ctx context.Context, userID, googleID, picture string) error {
+	oid, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return err
+	}
+	_, err = database.GetDB().Collection("users").UpdateOne(ctx,
+		bson.M{"_id": oid},
+		bson.M{"$set": bson.M{"googleId": googleID, "picture": picture}})
+	return err
 }
 
 // CreatePoll inserts a new poll

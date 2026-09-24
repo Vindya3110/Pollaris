@@ -57,6 +57,7 @@ func main() {
 	{
 		auth.POST("/register", registerHandler)
 		auth.POST("/login", loginHandler)
+		auth.POST("/google", googleAuthHandler)
 		auth.GET("/me", middleware.AuthMiddleware(), meHandler)
 	}
 
@@ -109,9 +110,10 @@ func env(key, fallback string) string {
 
 // Handler wrappers that cast to gin.HandlerFunc
 var (
-	registerHandler  = gin.HandlerFunc(handlers.Register)
-	loginHandler     = gin.HandlerFunc(handlers.Login)
-	meHandler        = gin.HandlerFunc(handlers.Me)
+	registerHandler    = gin.HandlerFunc(handlers.Register)
+	loginHandler       = gin.HandlerFunc(handlers.Login)
+	googleAuthHandler   = gin.HandlerFunc(handlers.GoogleAuth)
+	meHandler          = gin.HandlerFunc(handlers.Me)
 	createPollHandler = gin.HandlerFunc(handlers.CreatePoll)
 	getPollHandler   = gin.HandlerFunc(handlers.GetPoll)
 	getAllPollsHandler = gin.HandlerFunc(handlers.GetAllPolls)

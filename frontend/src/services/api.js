@@ -17,6 +17,14 @@ export const authAPI = {
       body: JSON.stringify(data),
     }).then(res => res.json()),
 
+  // Exchange Google ID token for our app JWT
+  googleAuth: (idToken) =>
+    fetch(`${API_URL}/auth/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken }),
+    }).then(res => res.json()),
+
   me: (token) =>
     fetch(`${API_URL}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },

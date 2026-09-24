@@ -6,13 +6,16 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// User represents a registered user
+// User represents a registered user (email/password or Google OAuth)
 type User struct {
-	ID        primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	Email     string             `json:"email" bson:"email"`
-	Password  string             `json:"-" bson:"password"`
-	Name      string             `json:"name" bson:"name"`
-	CreatedAt time.Time          `json:"createdAt" bson:"createdAt"`
+	ID           primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	Email        string             `json:"email" bson:"email"`
+	Password     string             `json:"-" bson:"password,omitempty"` // omitted for Google users
+	Name         string             `json:"name" bson:"name"`
+	AuthProvider string             `json:"authProvider,omitempty" bson:"authProvider,omitempty"` // "email" | "google"
+	GoogleID     string             `json:"-" bson:"googleId,omitempty"`
+	Picture      string             `json:"picture,omitempty" bson:"picture,omitempty"`
+	CreatedAt    time.Time          `json:"createdAt" bson:"createdAt"`
 }
 
 // Poll represents a poll

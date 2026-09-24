@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
@@ -96,6 +97,119 @@ func Login(c *gin.Context) {
 	token, _ := utils.GenerateToken(user.ID.Hex(), user.Email, user.Name)
 
 	c.JSON(http.StatusOK, models.AuthResponse{
+		Token: token,
+		User: models.UserInfo{
+			ID:    user.ID.Hex(),
+			Email: user.Email,
+			Name:  user.Name,
+		},
+	})
+}
+
+// GoogleAuthRequest body for Google OAuth
+type googleIDTokenPayload struct {
+	Sub           string `json:"sub"`
+	Email         string `json:"email"`
+	EmailVerified string `json:"email_verified"`
+	Name          string `json:"name"`
+	Picture       string `json:"picture"`
+	Aud           string `json:"aud"`
+	Iss           string `json:"iss"`
+	Exp           string `json:"exp"`
+}
+
+// GoogleAuth verifies a Google ID token and logs in / registers the user.
+// Uses Google's public tokeninfo endpoint to verify token signature & claims.
+// In production, switch to JWT verification via Google's public keys (googleidtoken verifier)
+// but tokeninfo is simple and works for this scope.
+func GoogleAuth(c *gin.Context) {
+	var req models.GoogleAuthRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, models.APIError{Error: "Invalid request: " + err.Error()})
+		return
+	}
+
+	idToken := strings.TrimSpace(req.IDToken)
+	if idToken == "" {
+		c.JSON(http.StatusBadRequest, models.APIError{Error: "Missing idToken"})
+		return
+	}
+
+	// Verify token with Google tokeninfo endpoint
+	httpClient := &http.Client{Timeout: 6 * time.Second}
+	resp, err := httpClient.Get("https://oauth2.googleapis.com/tokeninfo?id_token=" + idToken)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, models.APIError{Error: "Failed to verify Google token"})
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		c.JSON(http.StatusUnauthorized, models.APIError{Error: "Invalid Google token"})
+		return
+	}
+
+	var payload googleIDTokenPayload
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		c.JSON(http.StatusInternalServerError, models.APIError{Error: "Failed to parse Google token"})
+		return
+	}
+
+	if payload.Email == "" || payload.Sub == "" {
+		c.JSON(http.StatusUnauthorized, models.APIError{Error: "Google token missing required fields"})
+		return
+	}
+
+	// Strict checks
+	if payload.Iss != "https://accounts.google.com" && payload.Iss != "accounts.google.com" {
+		c.JSON(http.StatusUnauthorized, models.APIError{Error: "Invalid token issuer"})
+		return
+	}
+	if payload.EmailVerified != "true" {
+		c.JSON(http.StatusUnauthorized, models.APIError{Error: "Google email not verified"})
+		return
+	}
+
+	email := strings.ToLower(strings.TrimSpace(payload.Email))
+	name := strings.TrimSpace(payload.Name)
+	if name == "" {
+		name = strings.Split(email, "@")[0]
+	}
+
+	// Find or create user (link by email)
+	user, err := repository.FindUserByEmail(c, email)
+	if err != nil {
+		// user doesn't exist - create with random password (they'll use Google to login)
+		newUser := models.User{
+			Email:        email,
+			Password:     "", // empty — google-only account
+			Name:         name,
+			AuthProvider: "google",
+			GoogleID:     payload.Sub,
+			Picture:      payload.Picture,
+			CreatedAt:    time.Now(),
+		}
+		if err := repository.CreateUser(c, &newUser); err != nil {
+			// race: another request created between find-and-create
+			user, err = repository.FindUserByEmail(c, email)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, models.APIError{Error: "Failed to create user"})
+				return
+			}
+		} else {
+			user = &newUser
+		}
+	} else {
+		// Update google info if not present
+		if user.GoogleID == "" {
+			repository.UpdateUserGoogleInfo(c, user.ID.Hex(), payload.Sub, payload.Picture)
+			user.GoogleID = payload.Sub
+			user.Picture = payload.Picture
+		}
+	}
+
+	token, _ := utils.GenerateToken(user.ID.Hex(), user.Email, user.Name)
+	c.JSON(http.StatusOK, models.GoogleAuthResponse{
 		Token: token,
 		User: models.UserInfo{
 			ID:    user.ID.Hex(),

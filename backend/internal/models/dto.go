@@ -1,5 +1,16 @@
 package models
 
+// GoogleAuthRequest for Google OAuth login
+type GoogleAuthRequest struct {
+	IDToken string `json:"idToken" binding:"required"`
+}
+
+// GoogleAuthResponse is returned after Google OAuth
+type GoogleAuthResponse struct {
+	Token string   `json:"token"`
+	User  UserInfo `json:"user"`
+}
+
 // RegisterRequest for user signup
 type RegisterRequest struct {
 	Name     string `json:"name" binding:"required,min=2,max=50"`
