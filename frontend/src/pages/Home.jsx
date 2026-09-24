@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
-import { BarChart3, Zap, Users, Share2, ArrowRight, Globe } from 'lucide-react'
+import { BarChart3, Zap, Users, Share2, ArrowRight, Globe, Clock, QrCode, TrendingUp, EyeOff, Settings } from 'lucide-react'
 
 export default function Home() {
   const { user } = useAuth()
@@ -107,19 +107,24 @@ export default function Home() {
                 desc: 'WebSocket-powered live updates. Results animate instantly as votes arrive — no polling, no refresh.',
               },
               {
-                icon: <Users className="w-6 h-6" />,
-                title: 'No Login to Vote',
-                desc: 'Audience members vote instantly without creating an account. Just open the link and pick an option.',
+                icon: <Clock className="w-6 h-6" />,
+                title: 'Poll Expiration',
+                desc: 'Set an optional deadline for your poll. After expiry, voting closes automatically and the final results are locked.',
               },
               {
-                icon: <Share2 className="w-6 h-6" />,
-                title: 'One-Click Sharing',
-                desc: 'Copy the poll link and share it anywhere. Anyone with the link can vote and see results.',
+                icon: <QrCode className="w-6 h-6" />,
+                title: 'QR Code Sharing',
+                desc: 'Generate a QR code for any poll and print it on posters, slides, or handouts. Great for in-person events and classrooms.',
               },
               {
-                icon: <Globe className="w-6 h-6" />,
-                title: 'Deduplicated Votes',
-                desc: 'Each voter is tracked uniquely. Multiple accounts from the same device can vote independently.',
+                icon: <TrendingUp className="w-6 h-6" />,
+                title: 'Live Vote Timeline',
+                desc: 'Watch votes arrive in real-time with an animated timeline. See momentum shifts and trending spikes as your audience responds.',
+              },
+              {
+                icon: <EyeOff className="w-6 h-6" />,
+                title: 'Anonymous Results',
+                desc: 'Hide individual vote counts until the poll closes or the creator reveals them. Prevent bandwagon effects during live voting.',
               },
               {
                 icon: <BarChart3 className="w-6 h-6" />,
@@ -127,7 +132,7 @@ export default function Home() {
                 desc: 'Animated bar charts show vote distribution in real-time. See the lead change as votes come in.',
               },
               {
-                icon: <Users className="w-6 h-6" />,
+                icon: <Settings className="w-6 h-6" />,
                 title: 'Creator Dashboard',
                 desc: 'Manage all your polls from one place. Activate, deactivate, or delete polls anytime.',
               },
