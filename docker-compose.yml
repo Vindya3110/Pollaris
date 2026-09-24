@@ -3,8 +3,7 @@ services:
     image: mongo:7
     container_name: pollaris-mongo
     restart: always
-    ports:
-      - "27017:27017"
+    # No external port mapping — only backend (same network) needs access
     environment:
       MONGO_INITDB_DATABASE: pollaris
     volumes:
@@ -14,8 +13,7 @@ services:
     image: redis:7-alpine
     container_name: pollaris-redis
     restart: always
-    ports:
-      - "6379:6379"
+    # No external port mapping — only backend (same network) needs access
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data

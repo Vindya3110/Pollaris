@@ -9,4 +9,3 @@ build/
 .idea/
 Dockerfile
 docker-compose.yml
-nginx.conf
