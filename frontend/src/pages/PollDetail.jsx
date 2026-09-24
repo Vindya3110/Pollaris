@@ -23,9 +23,10 @@ export default function PollDetail() {
       const res = await pollAPI.getOne(id)
       if (res.pollId) {
         setPoll(res)
-        // Only show voted state if THIS specific viewer has voted
-        setHasVoted(!!res.userVoted)
-        setShowResults(!!res.userVoted)
+        // Only show results if THIS viewer has voted
+        const voted = !!res.userVoted
+        setHasVoted(voted)
+        setShowResults(voted)
       } else {
         toast.error('Poll not found')
         navigate('/')
@@ -94,12 +95,9 @@ export default function PollDetail() {
     if (res.success) {
       setHasVoted(true)
       setShowResults(true)
-      setPoll((prev) => ({
-        ...prev,
-        totalVotes: res.totalVotes,
-        options: res.options,
-      }))
-      toast.success('Vote recorded!')
+      // Reload poll to get full results now that we're marked as voted
+      await loadPoll()
+      toast.success('Vote recorded! Here are the live results.')
     } else {
       toast.error(res.error || 'Failed to vote')
     }
@@ -178,11 +176,12 @@ export default function PollDetail() {
                 <button
                   key={option.id}
                   onClick={() => setSelectedOption(option.id)}
+                  disabled={!poll.isActive}
                   className={`poll-option w-full text-left px-6 py-4 rounded-xl border-2 ${
                     selectedOption === option.id
                       ? 'border-indigo-500 selected'
                       : 'border-white/10 bg-white/5'
-                  }`}
+                  } ${!poll.isActive ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <div className="flex items-center gap-3 relative z-10">
                     <div className={`option-check w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
@@ -199,12 +198,25 @@ export default function PollDetail() {
                 </button>
               ))}
 
+              {!poll.isActive && (
+                <p className="text-center text-amber-400 text-sm py-2">This poll is closed</p>
+              )}
+
+              <p className="text-center text-gray-500 text-xs py-1">
+                🔒 Results hidden until you vote
+              </p>
+
               <button
                 onClick={handleVote}
-                disabled={!selectedOption || voting}
+                disabled={!selectedOption || voting || !poll.isActive}
                 className="btn-primary w-full text-white py-4 rounded-xl font-bold text-lg mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {voting ? 'Voting...' : !token ? 'Login to Vote' : 'Cast Vote'}
+                {voting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Voting...
+                  </span>
+                ) : !token ? 'Login to Vote' : 'Cast Vote'}
               </button>
 
               {!token && (

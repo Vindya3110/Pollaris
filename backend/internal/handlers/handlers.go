@@ -321,19 +321,36 @@ func GetPoll(c *gin.Context) {
 			voterID = cookieVal
 		}
 	}
+
 	userVoted := false
 	if voterID != "" {
 		userVoted, _ = services.HasVoted(poll.ID.Hex(), voterID)
 	}
 
+	// Hide results from viewers who haven't voted yet
+	showResults := userVoted || total == 0
+	displayResults := results
+	if !showResults {
+		// Return zeroed-out results so the UI shows nothing
+		displayResults = make([]models.VoteResult, len(results))
+		for i := range displayResults {
+			displayResults[i] = models.VoteResult{
+				ID:        results[i].ID,
+				Text:      results[i].Text,
+				VoteCount: 0,
+			}
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"pollId":     poll.ID.Hex(),
-		"question":   poll.Question,
-		"totalVotes": total,
-		"userVoted":  userVoted,
-		"options":    results,
-		"isActive":   poll.IsActive,
-		"createdAt":  poll.CreatedAt,
+		"pollId":        poll.ID.Hex(),
+		"question":      poll.Question,
+		"totalVotes":    total,
+		"userVoted":     userVoted,
+		"showResults":   showResults,
+		"options":       displayResults,
+		"isActive":      poll.IsActive,
+		"createdAt":     poll.CreatedAt,
 	})
 }
 
