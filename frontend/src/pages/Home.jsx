@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
-import { BarChart3, Zap, Users, Share2, ArrowRight, Globe, Clock, QrCode, TrendingUp, EyeOff, Settings } from 'lucide-react'
+import { BarChart3, Zap, Users, Share2, ArrowRight, Settings, Shield, Trash2 } from 'lucide-react'
 
 export default function Home() {
   const { user } = useAuth()
@@ -107,24 +107,9 @@ export default function Home() {
                 desc: 'WebSocket-powered live updates. Results animate instantly as votes arrive — no polling, no refresh.',
               },
               {
-                icon: <Clock className="w-6 h-6" />,
-                title: 'Poll Expiration',
-                desc: 'Set an optional deadline for your poll. After expiry, voting closes automatically and the final results are locked.',
-              },
-              {
-                icon: <QrCode className="w-6 h-6" />,
-                title: 'QR Code Sharing',
-                desc: 'Generate a QR code for any poll and print it on posters, slides, or handouts. Great for in-person events and classrooms.',
-              },
-              {
-                icon: <TrendingUp className="w-6 h-6" />,
-                title: 'Live Vote Timeline',
-                desc: 'Watch votes arrive in real-time with an animated timeline. See momentum shifts and trending spikes as your audience responds.',
-              },
-              {
-                icon: <EyeOff className="w-6 h-6" />,
-                title: 'Anonymous Results',
-                desc: 'Hide individual vote counts until the poll closes or the creator reveals them. Prevent bandwagon effects during live voting.',
+                icon: <Share2 className="w-6 h-6" />,
+                title: 'Shareable Links',
+                desc: 'Copy the unique poll link and share it anywhere — chat, email, social media. Anyone with the link can vote.',
               },
               {
                 icon: <BarChart3 className="w-6 h-6" />,
@@ -135,6 +120,16 @@ export default function Home() {
                 icon: <Settings className="w-6 h-6" />,
                 title: 'Creator Dashboard',
                 desc: 'Manage all your polls from one place. Activate, deactivate, or delete polls anytime.',
+              },
+              {
+                icon: <Shield className="w-6 h-6" />,
+                title: 'Google Sign-In',
+                desc: 'Sign in with email or your Google account. Quick setup, no password to remember.',
+              },
+              {
+                icon: <Users className="w-6 h-6" />,
+                title: 'Multi-Account Voting',
+                desc: 'Different accounts on the same device each get their own vote, so collaborators can vote independently.',
               },
             ].map((feature) => (
               <div key={feature.title} className="glass rounded-xl p-6 hover:shadow-lg transition-shadow">
