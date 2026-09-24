@@ -5,6 +5,7 @@ import { pollAPI } from '../services/api'
 import toast from 'react-hot-toast'
 import Navbar from '../components/Navbar'
 import ProtectedRoute from '../components/ProtectedRoute'
+import { Plus, X, BarChart3, ArrowRight } from 'lucide-react'
 
 function CreatePollForm() {
   const [question, setQuestion] = useState('')
@@ -68,18 +69,28 @@ function CreatePollForm() {
     <div className="min-h-screen">
       <Navbar />
       <div className="max-w-2xl mx-auto px-4 py-12">
-        <div className="glass rounded-2xl shadow-2xl p-8">
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">Create a Poll</h2>
-          <p className="text-gray-600 mb-8">Ask a question and give people options to vote on</p>
+        <div className="glass rounded-3xl shadow-2xl p-8 md:p-10 animate-fade-in-up">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-3xl font-bold text-white">Create a Poll</h2>
+              </div>
+            </div>
+            <p className="text-gray-400 ml-[52px]">Ask a question and give people options to vote on</p>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Your Question</label>
+              <label className="block text-sm font-medium text-indigo-200 mb-2">Your Question</label>
               <input
                 type="text"
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="input-field w-full px-4 py-3.5 rounded-xl text-gray-800"
                 placeholder="What do you want to ask?"
                 required
                 minLength={3}
@@ -88,38 +99,41 @@ function CreatePollForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Options</label>
-              {options.map((opt, i) => (
-                <div key={i} className="flex gap-2 mb-2">
-                  <span className="flex items-center justify-center w-8 h-12 bg-indigo-100 text-indigo-600 rounded-lg font-bold">
-                    {String.fromCharCode(65 + i)}
-                  </span>
-                  <input
-                    type="text"
-                    value={opt}
-                    onChange={(e) => updateOption(i, e.target.value)}
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    placeholder={`Option ${i + 1}`}
-                    maxLength={100}
-                  />
-                  {options.length > 2 && (
-                    <button
-                      type="button"
-                      onClick={() => removeOption(i)}
-                      className="px-3 text-red-500 hover:text-red-700"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-              ))}
+              <label className="block text-sm font-medium text-indigo-200 mb-3">Options</label>
+              <div className="space-y-3">
+                {options.map((opt, i) => (
+                  <div key={i} className="flex gap-3 animate-fade-in">
+                    <span className="flex items-center justify-center w-10 h-12 rounded-xl gradient-primary text-white font-bold text-sm shadow-md">
+                      {String.fromCharCode(65 + i)}
+                    </span>
+                    <input
+                      type="text"
+                      value={opt}
+                      onChange={(e) => updateOption(i, e.target.value)}
+                      className="input-field flex-1 px-4 py-3 rounded-xl text-gray-800"
+                      placeholder={`Option ${i + 1}`}
+                      maxLength={100}
+                    />
+                    {options.length > 2 && (
+                      <button
+                        type="button"
+                        onClick={() => removeOption(i)}
+                        className="px-3 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
               {options.length < 10 && (
                 <button
                   type="button"
                   onClick={addOption}
-                  className="text-indigo-600 hover:text-indigo-800 font-medium text-sm mt-2"
+                  className="mt-3 inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-medium text-sm transition-colors"
                 >
-                  + Add another option
+                  <Plus className="w-4 h-4" />
+                  Add another option
                 </button>
               )}
             </div>
@@ -127,9 +141,19 @@ function CreatePollForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50"
+              className="btn-primary w-full text-white py-4 rounded-xl font-bold text-base disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? 'Creating Poll...' : 'Create Poll'}
+              {loading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Creating Poll...
+                </>
+              ) : (
+                <>
+                  Create Poll
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
             </button>
           </form>
         </div>

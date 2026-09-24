@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
-import { BarChart3, Zap, Users, Share2, ArrowRight, Settings, Shield, Trash2 } from 'lucide-react'
+import { BarChart3, Zap, Share2, ArrowRight, Settings, Shield, Users } from 'lucide-react'
 
 export default function Home() {
   const { user } = useAuth()
@@ -11,81 +11,84 @@ export default function Home() {
       <Navbar />
 
       {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-800"></div>
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-300 rounded-full blur-3xl"></div>
-        </div>
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
-            Live Polls,<br />
-            <span className="text-indigo-200">Real-Time Results</span>
-          </h1>
-          <p className="text-xl text-indigo-100 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Create a poll in seconds, share the link, and watch results update live as your audience votes. No page refresh needed.
-          </p>
-          <div className="flex items-center justify-center gap-4">
-            {user ? (
+      <section className="hero-bg relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-950"></div>
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-28 text-center">
+          <div className="animate-fade-in-up">
+            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight tracking-tight">
+              <span className="gradient-text-white">Live Polls,</span>
+              <br />
+              <span className="gradient-text">Real-Time Results</span>
+            </h1>
+            <p className="text-lg md:text-xl text-indigo-200/80 mb-10 max-w-2xl mx-auto leading-relaxed">
+              Create a poll in seconds, share the link, and watch results update live as your audience votes.
+            </p>
+            <div className="flex items-center justify-center gap-4 flex-wrap">
+              {user ? (
+                <Link
+                  to="/create"
+                  className="btn-primary inline-flex items-center gap-2 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg"
+                >
+                  Create a Poll
+                  <ArrowRight className="w-5 h-5" />
+                </Link>
+              ) : (
+                <Link
+                  to="/register"
+                  className="btn-primary inline-flex items-center gap-2 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg"
+                >
+                  Get Started Free
+                  <ArrowRight className="w-5 h-5" />
+                </Link>
+              )}
               <Link
-                to="/create"
-                className="inline-flex items-center gap-2 bg-white text-indigo-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-colors shadow-lg"
+                to="/my-polls"
+                className="inline-flex items-center gap-2 bg-white/10 text-white border border-white/20 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/20 transition-all"
               >
-                Create a Poll
-                <ArrowRight className="w-5 h-5" />
+                My Polls
               </Link>
-            ) : (
-              <Link
-                to="/register"
-                className="inline-flex items-center gap-2 bg-white text-indigo-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-colors shadow-lg"
-              >
-                Get Started Free
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-            )}
-            <Link
-              to="/my-polls"
-              className="inline-flex items-center gap-2 bg-indigo-500/30 text-white border border-indigo-300 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-indigo-500/40 transition-colors"
-            >
-              My Polls
-            </Link>
+            </div>
           </div>
         </div>
       </section>
 
       {/* How it works */}
-      <section className="py-20 bg-white">
+      <section className="py-24 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-gray-800 mb-4">How It Works</h2>
-          <p className="text-gray-500 text-center mb-12 max-w-xl mx-auto">Three simple steps to engage your audience with live, real-time polling.</p>
+          <div className="text-center mb-16 animate-fade-in-up">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">How It Works</h2>
+            <p className="text-gray-500 max-w-xl mx-auto text-lg">Three simple steps to engage your audience with live, real-time polling.</p>
+          </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             {[
               {
-                icon: <BarChart3 className="w-10 h-10 text-indigo-600" />,
+                icon: <BarChart3 className="w-8 h-8 text-white" />,
                 step: '1',
                 title: 'Create Your Poll',
                 desc: 'Sign up, write a question, add options. Takes about 30 seconds.',
               },
               {
-                icon: <Share2 className="w-10 h-10 text-purple-600" />,
+                icon: <Share2 className="w-8 h-8 text-white" />,
                 step: '2',
                 title: 'Share the Link',
                 desc: 'Copy the unique link and share it anywhere — chat, email, social media.',
               },
               {
-                icon: <Zap className="w-10 h-10 text-green-600" />,
+                icon: <Zap className="w-8 h-8 text-white" />,
                 step: '3',
                 title: 'Watch Results Live',
                 desc: 'Results update in real-time as votes come in. No refresh needed.',
               },
             ].map((item) => (
-              <div key={item.step} className="text-center group">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-50 mb-4 group-hover:bg-indigo-100 transition-colors">
-                  {item.icon}
+              <div key={item.step} className="text-center animate-fade-in-up">
+                <div className="flex justify-center mb-6">
+                  <div className="step-number w-16 h-16 rounded-2xl flex items-center justify-center">
+                    {item.icon}
+                  </div>
                 </div>
-                <div className="text-sm font-bold text-indigo-600 mb-2">STEP {item.step}</div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">{item.title}</h3>
+                <div className="text-sm font-bold text-indigo-600 mb-2 tracking-wider">STEP {item.step}</div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">{item.title}</h3>
                 <p className="text-gray-500 leading-relaxed">{item.desc}</p>
               </div>
             ))}
@@ -94,47 +97,55 @@ export default function Home() {
       </section>
 
       {/* Features */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-24 bg-gray-50/50">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-gray-800 mb-4">Built for Speed and Scale</h2>
-          <p className="text-gray-500 text-center mb-12 max-w-xl mx-auto">Everything you need for live audience engagement, powered by a robust real-time stack.</p>
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Built for Live Engagement</h2>
+            <p className="text-gray-500 max-w-xl mx-auto text-lg">Everything you need for audience polling, powered by a robust real-time stack.</p>
+          </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               {
-                icon: <Zap className="w-6 h-6" />,
+                icon: <Zap className="w-6 h-6 text-indigo-600" />,
                 title: 'Truly Real-Time',
                 desc: 'WebSocket-powered live updates. Results animate instantly as votes arrive — no polling, no refresh.',
               },
               {
-                icon: <Share2 className="w-6 h-6" />,
+                icon: <Share2 className="w-6 h-6 text-indigo-600" />,
                 title: 'Shareable Links',
                 desc: 'Copy the unique poll link and share it anywhere — chat, email, social media. Anyone with the link can vote.',
               },
               {
-                icon: <BarChart3 className="w-6 h-6" />,
+                icon: <BarChart3 className="w-6 h-6 text-indigo-600" />,
                 title: 'Live Bar Charts',
                 desc: 'Animated bar charts show vote distribution in real-time. See the lead change as votes come in.',
               },
               {
-                icon: <Settings className="w-6 h-6" />,
+                icon: <Settings className="w-6 h-6 text-indigo-600" />,
                 title: 'Creator Dashboard',
                 desc: 'Manage all your polls from one place. Activate, deactivate, or delete polls anytime.',
               },
               {
-                icon: <Shield className="w-6 h-6" />,
+                icon: <Shield className="w-6 h-6 text-indigo-600" />,
                 title: 'Google Sign-In',
                 desc: 'Sign in with email or your Google account. Quick setup, no password to remember.',
               },
               {
-                icon: <Users className="w-6 h-6" />,
+                icon: <Users className="w-6 h-6 text-indigo-600" />,
                 title: 'Multi-Account Voting',
                 desc: 'Different accounts on the same device each get their own vote, so collaborators can vote independently.',
               },
-            ].map((feature) => (
-              <div key={feature.title} className="glass rounded-xl p-6 hover:shadow-lg transition-shadow">
-                <div className="text-indigo-600 mb-3">{feature.icon}</div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">{feature.title}</h3>
+            ].map((feature, i) => (
+              <div
+                key={feature.title}
+                className="glass-card rounded-2xl p-6 animate-fade-in-up"
+                style={{ animationDelay: `${i * 80}ms` }}
+              >
+                <div className="feature-icon w-12 h-12 rounded-xl flex items-center justify-center mb-4">
+                  {feature.icon}
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">{feature.title}</h3>
                 <p className="text-gray-500 text-sm leading-relaxed">{feature.desc}</p>
               </div>
             ))}
@@ -142,15 +153,37 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Stats bar */}
+      <section className="py-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="glass rounded-2xl p-8 md:p-12">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+              {[
+                { label: 'Tech Stack', value: '4', sub: 'React, Go, MongoDB, Redis' },
+                { label: 'Real-Time', value: 'WebSocket', sub: 'Live vote streaming' },
+                { label: 'Auth', value: 'JWT + OAuth', sub: 'Google + Email sign-in' },
+                { label: 'Deploy', value: 'Docker', sub: 'One-command setup' },
+              ].map((stat) => (
+                <div key={stat.label}>
+                  <div className="text-2xl md:text-3xl font-bold gradient-text mb-1">{stat.value}</div>
+                  <div className="text-sm font-medium text-gray-700 mb-1">{stat.label}</div>
+                  <div className="text-xs text-gray-400">{stat.sub}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
-      <section className="py-20">
+      <section className="py-24">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">Ready to go live?</h2>
-          <p className="text-indigo-200 mb-8 text-lg">Create your first poll in under a minute.</p>
+          <h2 className="text-4xl font-bold text-white mb-4">Ready to go live?</h2>
+          <p className="text-indigo-200/70 mb-10 text-lg">Create your first poll in under a minute.</p>
           {user ? (
             <Link
               to="/create"
-              className="inline-flex items-center gap-2 bg-white text-indigo-600 px-10 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-colors shadow-lg"
+              className="btn-primary inline-flex items-center gap-2 text-white px-10 py-4 rounded-xl font-bold text-lg shadow-lg"
             >
               Create a Poll
               <ArrowRight className="w-5 h-5" />
@@ -158,7 +191,7 @@ export default function Home() {
           ) : (
             <Link
               to="/register"
-              className="inline-flex items-center gap-2 bg-white text-indigo-600 px-10 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-colors shadow-lg"
+              className="btn-primary inline-flex items-center gap-2 text-white px-10 py-4 rounded-xl font-bold text-lg shadow-lg"
             >
               Get Started
               <ArrowRight className="w-5 h-5" />
@@ -168,9 +201,11 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-8">
-        <div className="max-w-5xl mx-auto px-4 text-center text-sm">
-          <p>Pollaris — Live Polling Tool. Built with React, Go, MongoDB & Redis.</p>
+      <footer className="border-t border-white/10 py-10">
+        <div className="max-w-5xl mx-auto px-4 text-center">
+          <p className="text-indigo-300/50 text-sm">
+            Pollaris — Live Polling Tool. Built with React, Go, MongoDB & Redis.
+          </p>
         </div>
       </footer>
     </div>
