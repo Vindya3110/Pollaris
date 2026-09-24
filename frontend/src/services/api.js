@@ -62,8 +62,12 @@ export const pollAPI = {
     let voterId = ''
     try {
       if (token) {
-        const payload = JSON.parse(atob(token.split('.')[1]))
-        voterId = 'user_' + payload.userId
+        // JWT uses base64url encoding; atob() needs standard base64
+        const payload = token.split('.')[1]
+        const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
+        const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=')
+        const decoded = JSON.parse(atob(padded))
+        voterId = 'user_' + decoded.userId
       }
       if (!voterId) {
         voterId = localStorage.getItem('pollaris_voter_id')
