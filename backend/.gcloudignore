@@ -1,0 +1,5 @@
+# Minimal ignore - keep everything needed for the build
+.env
+.env.local
+.env.deploy
+node_modules/

@@ -16,34 +16,41 @@ if [ -f "$SCRIPT_DIR/.env.deploy" ]; then
 fi
 
 if [ -z "$MONGO_URI" ]; then
-  echo "❌ Error: MONGO_URI not set"
-  echo "   Add it to .env.deploy or run: export MONGO_URI='your-connection-string'"
+  echo "Error: MONGO_URI not set. Add it to .env.deploy or export it."
   exit 1
 fi
 
 if [ -z "$REDIS_ADDR" ]; then
-  echo "❌ Error: REDIS_ADDR not set"
-  echo "   Add it to .env.deploy or run: export REDIS_ADDR='your-redis-url'"
+  echo "Error: REDIS_ADDR not set. Add it to .env.deploy or export it."
   exit 1
 fi
 
-echo "🚀 Deploying Pollaris Backend to Cloud Run..."
-
-# Get GCP project ID from gcloud config
+# Get GCP project ID
 PROJECT_ID=$(gcloud config get-value project 2>/dev/null)
 if [ -z "$PROJECT_ID" ]; then
-  echo "❌ No GCP project set. Run: gcloud config set project YOUR_PROJECT_ID"
+  echo "Error: No GCP project set. Run: gcloud config set project YOUR_PROJECT_ID"
   exit 1
 fi
-echo "   Project: $PROJECT_ID"
+echo "Project: $PROJECT_ID"
 
 # Generate JWT secret if not provided
 JWT_SECRET="${JWT_SECRET:-$(openssl rand -base64 32)}"
 
-# Submit Cloud Build with the config file
-gcloud builds submit \
-  --config cloudbuild.yaml \
-  --substitutions=_MONGO_URI="$MONGO_URI",_REDIS_ADDR="$REDIS_ADDR",_JWT_SECRET="$JWT_SECRET" .
+# Deploy to Cloud Run (image already exists, just update deploy config)
+echo ""
+echo "Deploying to Cloud Run..."
 
-echo "✅ Backend deployed!"
-echo "🔗 URL will be shown above — save it for frontend config"
+gcloud run deploy pollaris-backend \
+  --image gcr.io/$PROJECT_ID/pollaris-backend \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --port 8080 \
+  --memory 512Mi \
+  --cpu 1 \
+  --timeout 300 \
+  --max-instances 10 \
+  --set-env-vars "MONGO_URI=$MONGO_URI,REDIS_ADDR=$REDIS_ADDR,JWT_SECRET=$JWT_SECRET"
+
+echo ""
+echo "Backend deployed!"
