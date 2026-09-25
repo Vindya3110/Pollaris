@@ -14,12 +14,13 @@ export default function Register() {
   const navigate = useNavigate()
   const { initGoogle } = useGoogleLogin()
 
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+
   useEffect(() => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
     if (clientId) {
       initGoogle('google-register-btn', clientId)
     }
-  }, [initGoogle])
+  }, [initGoogle, clientId])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -36,8 +37,6 @@ export default function Register() {
     setLoading(false)
   }
 
-  const hasGoogleClient = !!import.meta.env.VITE_GOOGLE_CLIENT_ID
-
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -52,7 +51,7 @@ export default function Register() {
             <p className="text-indigo-200/70">Join Pollaris and start creating polls</p>
           </div>
 
-          {hasGoogleClient && (
+          {clientId && (
             <>
               <div id="google-register-btn" className="flex justify-center mb-6"></div>
               <div className="relative my-6">
@@ -60,10 +59,16 @@ export default function Register() {
                   <div className="w-full border-t border-white/10"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-3 text-indigo-300/70" style={{ background: 'transparent' }}>or sign up with email</span>
+                  <span className="px-3 text-indigo-300/70">or sign up with email</span>
                 </div>
               </div>
             </>
+          )}
+
+          {!clientId && (
+            <p className="text-center text-indigo-200/50 text-sm mb-6">
+              Sign up with your email to get started
+            </p>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -133,19 +138,13 @@ export default function Register() {
             </button>
           </form>
 
-          {!hasGoogleClient && (
-            <div className="mt-6 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-sm text-amber-300">
-              💡 Add <code className="bg-amber-500/20 px-1 rounded">VITE_GOOGLE_CLIENT_ID</code> to <code className="bg-amber-500/20 px-1 rounded">.env</code> to enable Google Sign-In.
-            </div>
-          )}
-
           <p className="mt-8 text-center text-indigo-200/70">
             Already have an account?{' '}
             <Link to="/login" className="text-indigo-400 hover:text-indigo-300 font-medium">
               Sign in →
             </Link>
           </p>
-          </div>
+        </div>
       </div>
     </div>
   )
