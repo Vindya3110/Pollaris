@@ -127,7 +127,7 @@ export default function Home() {
                 desc: 'Manage all your polls from one place. Activate, deactivate, or delete polls anytime.',
               },
               {
-                icon: <Shield className="w-6 h-6 text-indigo-400" />,
+                icon: <Lock className="w-6 h-6 text-indigo-400" />,
                 title: 'Secure Auth',
                 desc: 'Email/password authentication with JWT. Passwords hashed with bcrypt. Create an account in seconds and start polling immediately.',
               },
