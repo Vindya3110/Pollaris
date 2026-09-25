@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
-import { BarChart3, Zap, Share2, ArrowRight, Settings, Shield, Users } from 'lucide-react'
+import { BarChart3, Zap, Share2, ArrowRight, Settings, Lock, Users } from 'lucide-react'
 
 export default function Home() {
   const { user } = useAuth()
@@ -128,8 +128,8 @@ export default function Home() {
               },
               {
                 icon: <Shield className="w-6 h-6 text-indigo-400" />,
-                title: 'Google Sign-In',
-                desc: 'Sign in with email or your Google account. Quick setup, no password to remember.',
+                title: 'Secure Auth',
+                desc: 'Email/password authentication with JWT. Passwords hashed with bcrypt. Create an account in seconds and start polling immediately.',
               },
               {
                 icon: <Users className="w-6 h-6 text-indigo-400" />,
