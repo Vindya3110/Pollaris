@@ -11,9 +11,8 @@ if [ -z "$1" ]; then
 fi
 
 BACKEND_URL="$1"
-# Strip trailing slash and /api
+# Strip trailing slash only — keep /api if present
 BACKEND_URL="${BACKEND_URL%/}"
-BACKEND_URL="${BACKEND_URL%/api}"
 
 # Ensure gcloud is in PATH
 export PATH="/Users/work/Downloads/google-cloud-sdk/bin:$PATH"
