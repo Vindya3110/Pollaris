@@ -1,6 +1,7 @@
 package database
 
 import (
+	"crypto/tls"
 	"context"
 	"fmt"
 	"net/url"
@@ -14,7 +15,7 @@ var Rdb *redis.Client
 
 // ConnectRedis establishes a Redis connection.
 // If addr is a full URL (redis:// or rediss://), it parses it
-// manually and configures TLS for rediss://.
+// manually. rediss:// enables TLS automatically.
 // Otherwise it uses addr/password/db separately.
 func ConnectRedis(addr, password string, db int) (*redis.Client, error) {
 	opts := &redis.Options{}
@@ -34,6 +35,10 @@ func ConnectRedis(addr, password string, db int) (*redis.Client, error) {
 			if _, err := fmt.Sscanf(path, "%d", &dbNum); err == nil {
 				opts.DB = dbNum
 			}
+		}
+		// Enable TLS for rediss://
+		if parsed.Scheme == "rediss" {
+			opts.TLSConfig = &tls.Config{MinVersion: tls.VersionTLS12}
 		}
 	} else {
 		opts.Addr = addr
