@@ -1,29 +1,14 @@
-# Build with no-cache to bust Docker layer cache
+# Cloud Build — deploys Pollaris as a single container to Cloud Run
+# The Go binary serves both the API and the React frontend static files.
 steps:
-  # Build backend (no cache)
+  # Build the combined Docker image
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
       - '--no-cache'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/pollaris-backend:latest'
-      - '-f'
-      - 'backend/Dockerfile'
-      - 'backend'
-
-  # Build frontend (no cache)
-  - name: 'gcr.io/cloud-builders/docker'
-    args:
-      - 'build'
-      - '--no-cache'
-      - '-t'
-      - 'gcr.io/$PROJECT_ID/pollaris-frontend:latest'
-      - '-f'
-      - 'frontend/Dockerfile'
-      - '--build-arg'
-      - 'VITE_API_URL=$_VITE_API_URL'
-      - 'frontend'
+      - 'gcr.io/$PROJECT_ID/pollaris:latest'
+      - '.'
 
 images:
-  - 'gcr.io/$PROJECT_ID/pollaris-backend:latest'
-  - 'gcr.io/$PROJECT_ID/pollaris-frontend:latest'
+  - 'gcr.io/$PROJECT_ID/pollaris:latest'

@@ -1,10 +1,20 @@
 import { useEffect, useRef } from 'react'
 
-// VITE_API_URL is set at build time (baked into the JS bundle).
-// This eliminates the nginx proxy layer — the frontend calls the
-// backend directly using absolute URLs. CORS is already configured
-// on the backend (Access-Control-Allow-Origin: *).
-export const BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+// Detect if frontend is served from the same origin as the backend
+// (production: backend serves frontend static files) or a different origin
+// (dev: separate frontend:3000 + backend:8080 via vite proxy)
+const isSameOrigin = () => {
+  try {
+    const url = new URL(import.meta.env.VITE_API_URL || window.location.origin)
+    return url.origin === window.location.origin
+  } catch {
+    return false
+  }
+}
+
+export const BASE = isSameOrigin()
+  ? ''  // same origin — use relative paths
+  : (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 export const API_URL = `${BASE}/api`
 export const WS_URL = `${BASE.replace(/^http/, 'ws')}/ws`
 
