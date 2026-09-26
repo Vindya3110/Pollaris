@@ -71,7 +71,7 @@ JWT_SECRET=<JWT signing secret>
 
 ### Frontend
 ```
-VITE_API_URL=https://pollaris-backend-4dtpsxgjta-uc.a.run.app
+VITE_API_URL=https://pollaris-1061288659823.us-central1.run.app
 ```
 
 ## How to Run Locally
