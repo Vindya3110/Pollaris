@@ -8,6 +8,21 @@ export const BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 export const API_URL = `${BASE}/api`
 export const WS_URL = `${BASE.replace(/^http/, 'ws')}/ws`
 
+// Read JWT from localStorage — used as fallback when React state
+// (useAuth().token) hasn't hydrated yet on initial page load.
+function getAuthHeader() {
+  const token = localStorage.getItem('token')
+  if (!token) return {}
+  return { Authorization: `Bearer ${token}` }
+}
+
+// Redirect to login when a 401 is received
+function handle401() {
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+  window.location.assign('/login')
+}
+
 export const authAPI = {
   register: (data) =>
     fetch(`${API_URL}/auth/register`, {
@@ -42,10 +57,13 @@ export const pollAPI = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : getAuthHeader()),
       },
       body: JSON.stringify(data),
-    }).then(res => res.json()),
+    }).then(res => {
+      if (res.status === 401) handle401()
+      return res.json()
+    }),
 
   getAll: () =>
     fetch(`${API_URL}/polls`).then(res => res.json()),
@@ -74,12 +92,12 @@ export const pollAPI = {
 
   getMyPolls: (token) =>
     fetch(`${API_URL}/polls/my`, {
-      headers: { Authorization: `Bearer ${token || ''}` },
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : getAuthHeader()) },
     }).then(res => res.json()),
 
   getMyVotes: (token) =>
     fetch(`${API_URL}/polls/my-votes`, {
-      headers: { Authorization: `Bearer ${token || ''}` },
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : getAuthHeader()) },
     }).then(res => res.json()),
 
   vote: (data, token) => {
@@ -105,14 +123,14 @@ export const pollAPI = {
 
     const headers = {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${token || ''}`,
     }
     if (voterId) headers['X-Voter-Id'] = voterId
 
     return fetch(`${API_URL}/polls/vote`, {
-      method: 'POST',
       headers,
       body: JSON.stringify(data),
+      method: 'POST',
     }).then(res => res.json())
   },
 
@@ -121,16 +139,22 @@ export const pollAPI = {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token || ''}`,
       },
       body: JSON.stringify({ isActive }),
-    }).then(res => res.json()),
+    }).then(res => {
+      if (res.status === 401) handle401()
+      return res.json()
+    }),
 
   delete: (id, token) =>
     fetch(`${API_URL}/polls/${id}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    }).then(res => res.json()),
+      headers: { Authorization: `Bearer ${token || ''}` },
+    }).then(res => {
+      if (res.status === 401) handle401()
+      return res.json()
+    }),
 }
 
 export function useWebSocket(pollId, onMessage) {
