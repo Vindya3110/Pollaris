@@ -125,8 +125,16 @@ Connect to `/ws?pollId=<pollID>` to receive real-time updates:
 
 ## Deployment
 
-Uses Google Cloud Build + Cloud Run. The `cloudbuild.yaml` builds both frontend and backend, then deploys them.
+Uses Google Cloud Build + Cloud Run. Single-container deployment:
+the Go backend serves both the REST/WebSocket API and the React
+frontend static files (no separate frontend service needed).
+
+Push to `main` triggers a Cloud Build → Cloud Run deploy.
+
+## Live App
+
+**https://pollaris-1061288659823.us-central1.run.app**
 
 ## Author Notes
 
-This project was built for the GUVI Developer Internship task. The live app is at https://pollaris-frontend-1061288659823.us-central1.run.app
+This project was built for the GUVI Developer Internship task.
