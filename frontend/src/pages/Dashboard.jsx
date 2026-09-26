@@ -37,11 +37,11 @@ export default function Dashboard() {
     setLoading(false)
   }
 
-  // Global stats (from all polls, not just the creator's own)
-  const globalTotalVotes = allPolls.reduce((sum, p) => sum + (p.totalVotes || 0), 0)
-  const totalPollCount = allPolls.length
-  const activePollCount = allPolls.filter(p => p.isActive).length
-  const totalPollsCreated = myPolls.length
+  // Stats match the currently active tab so numbers are consistent
+  const displayedPolls = activeTab === 'voted' ? votedPolls : myPolls
+  const totalVotesShown = displayedPolls.reduce((sum, p) => sum + (p.totalVotes || 0), 0)
+  const activeShown = displayedPolls.filter(p => p.isActive).length
+  const totalShown = displayedPolls.length
 
   const formatDate = (dateStr) => {
     const d = new Date(dateStr)
@@ -66,13 +66,12 @@ export default function Dashboard() {
           <p className="text-indigo-200/60">Here's what's happening with your polls</p>
         </div>
 
-        {/* Stats cards — show global stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {/* Stats cards — match the active tab so numbers stay consistent */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
           {[
-            { label: 'Total Polls', value: totalPollCount, icon: <BarChart3 className="w-5 h-5" />, color: 'from-blue-500 to-cyan-500' },
-            { label: 'Active Polls', value: activePollCount, icon: <Activity className="w-5 h-5" />, color: 'from-green-500 to-emerald-500' },
-            { label: 'Total Votes', value: globalTotalVotes, icon: <Vote className="w-5 h-5" />, color: 'from-purple-500 to-pink-500' },
-            { label: 'You Created', value: totalPollsCreated, icon: <MousePointerClick className="w-5 h-5" />, color: 'from-orange-500 to-amber-500' },
+            { label: 'Total Polls', value: totalShown, icon: <BarChart3 className="w-5 h-5" />, color: 'from-blue-500 to-cyan-500' },
+            { label: 'Active Polls', value: activeShown, icon: <Activity className="w-5 h-5" />, color: 'from-green-500 to-emerald-500' },
+            { label: 'Total Votes', value: totalVotesShown, icon: <Vote className="w-5 h-5" />, color: 'from-purple-500 to-pink-500' },
           ].map((stat) => (
             <div key={stat.label} className="glass rounded-2xl p-5 animate-fade-in-up">
               <div className={`inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br ${stat.color} text-white mb-3 shadow-lg`}>
