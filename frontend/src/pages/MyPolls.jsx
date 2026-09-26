@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { pollAPI } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import Navbar from '../components/Navbar'
-import { BarChart3, ExternalLink, Eye, EyeOff, Trash2, Copy, Plus, Calendar } from 'lucide-react'
+import { BarChart3, ExternalLink, Eye, EyeOff, Trash2, Copy, Plus, ArrowLeft } from 'lucide-react'
 
 export default function MyPolls() {
   const [polls, setPolls] = useState([])
@@ -12,6 +12,7 @@ export default function MyPolls() {
   const [filter, setFilter] = useState('all') // 'all', 'active', 'inactive'
   const [confirmDelete, setConfirmDelete] = useState(null) // pollId awaiting confirmation
   const { token } = useAuth()
+  const navigate = useNavigate()
 
   useEffect(() => {
     loadPolls()
@@ -73,6 +74,13 @@ export default function MyPolls() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
+            <button
+              onClick={() => navigate(-1)}
+              className="inline-flex items-center gap-1 text-indigo-300 hover:text-white text-sm mb-3 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </button>
             <h1 className="text-3xl font-bold text-white drop-shadow-lg">My Polls</h1>
             <p className="text-white/70">Manage and track your polls</p>
           </div>

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { pollAPI } from '../services/api'
 import Navbar from '../components/Navbar'
 import {
-  BarChart3, Plus, Users, Vote, MousePointerClick, Activity, ArrowRight,
+  BarChart3, Plus, Vote, MousePointerClick, Activity, ArrowRight,
 } from 'lucide-react'
 
 export default function Dashboard() {
@@ -14,7 +14,7 @@ export default function Dashboard() {
   const [votedPolls, setVotedPolls] = useState([])
   const [allPolls, setAllPolls] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('discover')
+  const [activeTab, setActiveTab] = useState('created')
 
   useEffect(() => {
     fetchData()
@@ -37,11 +37,11 @@ export default function Dashboard() {
     setLoading(false)
   }
 
+  // Global stats (from all polls, not just the creator's own)
   const globalTotalVotes = allPolls.reduce((sum, p) => sum + (p.totalVotes || 0), 0)
-  const totalPollsCreated = myPolls.length
-  const votedPollCount = votedPolls.length
   const totalPollCount = allPolls.length
   const activePollCount = allPolls.filter(p => p.isActive).length
+  const totalPollsCreated = myPolls.length
 
   const formatDate = (dateStr) => {
     const d = new Date(dateStr)
@@ -66,7 +66,7 @@ export default function Dashboard() {
           <p className="text-indigo-200/60">Here's what's happening with your polls</p>
         </div>
 
-        {/* Stats cards — show global stats, not just creator's own */}
+        {/* Stats cards — show global stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
             { label: 'Total Polls', value: totalPollCount, icon: <BarChart3 className="w-5 h-5" />, color: 'from-blue-500 to-cyan-500' },
@@ -93,21 +93,13 @@ export default function Dashboard() {
             <Plus className="w-5 h-5" />
             Create Poll
           </Link>
-          <Link
-            to="/polls"
-            className="inline-flex items-center gap-2 bg-white/10 text-white border border-white/20 px-6 py-3 rounded-xl font-semibold hover:bg-white/20 transition-all"
-          >
-            <Users className="w-5 h-5" />
-            Browse Polls
-          </Link>
         </div>
 
         {/* Tabs */}
         <div className="flex gap-1 mb-6 bg-white/5 p-1 rounded-xl w-fit">
           {[
             { key: 'created', label: 'My Polls', count: myPolls.length },
-            { key: 'voted', label: 'Voted Polls', count: votedPollCount },
-            { key: 'discover', label: 'All Polls', count: totalPollCount },
+            { key: 'voted', label: 'Voted Polls', count: votedPolls.length },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -157,28 +149,12 @@ export default function Dashboard() {
                 <EmptyState
                   icon={<Vote className="w-12 h-12" />}
                   title="No votes yet"
-                  description="Browse polls and cast your vote"
-                  action={{ label: 'Discover Polls', to: '/polls' }}
+                  description="Vote on any poll you have the link for"
+                  action={{ label: 'Create Poll', to: '/create' }}
                 />
               ) : (
                 votedPolls.map((poll, i) => (
                   <PollCard key={poll.pollId} poll={poll} index={i} type="voted" formatDate={formatDate} getLeadingOption={getLeadingOption} />
-                ))
-              )
-            )}
-
-            {/* All Polls (discover) */}
-            {activeTab === 'discover' && (
-              allPolls.length === 0 ? (
-                <EmptyState
-                  icon={<Users className="w-12 h-12" />}
-                  title="No active polls"
-                  description="Be the first to create a poll"
-                  action={{ label: 'Create Poll', to: '/create' }}
-                />
-              ) : (
-                allPolls.map((poll, i) => (
-                  <PollCard key={poll.pollId} poll={poll} index={i} type="discover" formatDate={formatDate} getLeadingOption={getLeadingOption} />
                 ))
               )
             )}
@@ -214,13 +190,6 @@ function PollCard({ poll, index, type, formatDate, getLeadingOption }) {
             {type === 'voted' && (
               <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-300 font-medium">
                 Voted
-              </span>
-            )}
-            {type === 'discover' && (
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                poll.isActive ? 'bg-green-500/20 text-green-300' : 'bg-amber-500/20 text-amber-300'
-              }`}>
-                {poll.isActive ? 'Active' : 'Closed'}
               </span>
             )}
             <span className="text-xs text-indigo-200/40 flex items-center gap-1">
