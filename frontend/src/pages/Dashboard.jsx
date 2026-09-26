@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { pollAPI } from '../services/api'
 import Navbar from '../components/Navbar'
 import {
-  BarChart3, Plus, Vote, MousePointerClick, Activity, ArrowRight,
+  BarChart3, Plus, Vote, MousePointerClick, Activity, ArrowRight, Clock,
 } from 'lucide-react'
 
 export default function Dashboard() {
