@@ -54,8 +54,13 @@ func main() {
 	// Init JWT
 	utils.InitJWT(jwtSecret)
 
-	// Router
-	r := gin.Default()
+	// Router — release mode for production (less verbose logging)
+	if os.Getenv("GIN_MODE") == "" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+	r := gin.New()
+	r.Use(gin.Logger())
+	r.Use(gin.Recovery())
 	r.Use(middleware.CORSMiddleware())
 
 	// Public auth
@@ -94,6 +99,32 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
+	// Serve frontend static files (production)
+	// The Dockerfile copies the built React dist/ into the working directory.
+	staticDir := "./dist"
+	if _, err := os.Stat(staticDir); err == nil {
+		log.Printf("Serving frontend from %s", staticDir)
+
+		// Serve static assets
+		r.Static("/assets", staticDir+"/assets")
+		r.StaticFile("/favicon.ico", staticDir+"/favicon.ico")
+
+		// SPA fallback — any non-/api route returns index.html for client-side routing
+		r.NoRoute(func(c *gin.Context) {
+			path := staticDir + c.Request.URL.Path
+			if c.Request.URL.Path == "/" || c.Request.URL.Path[0] != '/' {
+				c.File(staticDir + "/index.html")
+				return
+			}
+			// If the file exists, serve it; otherwise serve index.html (SPA)
+			if _, err := os.Stat(path); err == nil {
+				c.File(path)
+			} else {
+				c.File(staticDir + "/index.html")
+			}
+		})
+	}
+
 	// Start
 	go func() {
 		log.Printf("Pollaris server starting on :%s", port)
@@ -118,17 +149,17 @@ func env(key, fallback string) string {
 
 // Handler wrappers that cast to gin.HandlerFunc
 var (
-	registerHandler    = gin.HandlerFunc(handlers.Register)
-	loginHandler       = gin.HandlerFunc(handlers.Login)
+	registerHandler     = gin.HandlerFunc(handlers.Register)
+	loginHandler        = gin.HandlerFunc(handlers.Login)
 	googleAuthHandler   = gin.HandlerFunc(handlers.GoogleAuth)
-	meHandler          = gin.HandlerFunc(handlers.Me)
-	createPollHandler = gin.HandlerFunc(handlers.CreatePoll)
-	getPollHandler   = gin.HandlerFunc(handlers.GetPoll)
-	getAllPollsHandler = gin.HandlerFunc(handlers.GetAllPolls)
-	getMyPollsHandler = gin.HandlerFunc(handlers.GetMyPolls)
-	getMyVotesHandler = gin.HandlerFunc(handlers.GetMyVotes)
-	voteHandler      = gin.HandlerFunc(handlers.Vote)
-	togglePollHandler = gin.HandlerFunc(handlers.TogglePoll)
-	deletePollHandler = gin.HandlerFunc(handlers.DeletePoll)
-	serveWSHandler   = gin.HandlerFunc(handlers.ServeWS)
+	meHandler           = gin.HandlerFunc(handlers.Me)
+	createPollHandler   = gin.HandlerFunc(handlers.CreatePoll)
+	getPollHandler      = gin.HandlerFunc(handlers.GetPoll)
+	getAllPollsHandler  = gin.HandlerFunc(handlers.GetAllPolls)
+	getMyPollsHandler   = gin.HandlerFunc(handlers.GetMyPolls)
+	getMyVotesHandler   = gin.HandlerFunc(handlers.GetMyVotes)
+	voteHandler         = gin.HandlerFunc(handlers.Vote)
+	togglePollHandler   = gin.HandlerFunc(handlers.TogglePoll)
+	deletePollHandler   = gin.HandlerFunc(handlers.DeletePoll)
+	serveWSHandler      = gin.HandlerFunc(handlers.ServeWS)
 )

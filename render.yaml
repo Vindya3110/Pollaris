@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: pollaris
+    runtime: go
+    plan: free
+    region: oregon
+    buildCommand: |
+      cd frontend && npm install && npm run build
+      cp -r frontend/dist backend/dist
+      cd backend && go build -o server ./cmd/server/
+    startCommand: ./server
+    envVars:
+      - key: MONGO_URI
+        value: mongodb+srv://vindyavasini3110_db_user:DpabZ8Fq6h9496ie@cluster0.zb9pego.mongodb.net/pollaris?appName=Cluster0
+      - key: REDIS_ADDR
+        value: rediss://default:Aa0SAAIgcDExNTcwMjYwYmJjYmQ0NjAyOWYyYjYzZTE1NmM1YTkwNQ@sterling-emu-44306.upstash.io:6379
+      - key: REDIS_PASSWORD
+        value: ""
+      - key: JWT_SECRET
+        value: pollaris-jwt-secret-2024
+      - key: GIN_MODE
+        value: release
+      - key: NODE_VERSION
+        value: "20"
