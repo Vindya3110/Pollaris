@@ -1,41 +1,40 @@
 import { useEffect, useRef } from 'react'
 
-// API base from Vite build-time env, or empty string as fallback
-const rawBase = import.meta.env.VITE_API_URL || ''
-const API_URL = rawBase ? `${rawBase}/api` : '/api'
-const WS_URL = rawBase ? `${rawBase.replace(/^http/, 'ws')}/ws` : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`
+// Use relative API paths — nginx proxies /api/* to the Go backend.
+// For WebSocket, use the same host with ws/wss protocol.
+const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`
 
 export const authAPI = {
   register: (data) =>
-    fetch(`${API_URL}/auth/register`, {
+    fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }).then(res => res.json()),
 
   login: (data) =>
-    fetch(`${API_URL}/auth/login`, {
+    fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }).then(res => res.json()),
 
   googleAuth: (idToken) =>
-    fetch(`${API_URL}/auth/google`, {
+    fetch('/api/auth/google', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ idToken }),
     }).then(res => res.json()),
 
   me: (token) =>
-    fetch(`${API_URL}/auth/me`, {
+    fetch('/api/auth/me', {
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => res.json()),
 }
 
 export const pollAPI = {
   create: (data, token) =>
-    fetch(`${API_URL}/polls`, {
+    fetch('/api/polls', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -45,9 +44,10 @@ export const pollAPI = {
     }).then(res => res.json()),
 
   getAll: () =>
-    fetch(`${API_URL}/polls`).then(res => res.json()),
+    fetch('/api/polls').then(res => res.json()),
 
   getOne: (id) => {
+    // Send voter ID so backend can check if THIS viewer has voted
     let voterId = ''
     try {
       const token = localStorage.getItem('token')
@@ -65,23 +65,30 @@ export const pollAPI = {
 
     const headers = {}
     if (voterId) headers['X-Voter-Id'] = voterId
-    return fetch(`${API_URL}/polls/${id}`, { headers }).then(res => res.json())
+
+    return fetch(`/api/polls/${id}`, { headers }).then(res => res.json())
   },
 
   getMyPolls: (token) =>
-    fetch(`${API_URL}/polls/my`, {
+    fetch('/api/polls/my', {
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => res.json()),
 
   getMyVotes: (token) =>
-    fetch(`${API_URL}/polls/my-votes`, {
+    fetch('/api/polls/my-votes', {
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => res.json()),
 
   vote: (data, token) => {
+    // Priority for voter ID:
+    // 1. Authenticated user's account ID — so two different accounts
+    //    in the same browser each get their own vote
+    // 2. Browser-based localStorage ID — for anonymous voters,
+    //    distinguishes different browsers/devices
     let voterId = ''
     try {
       if (token) {
+        // JWT uses base64url encoding; atob() needs standard base64
         const payload = token.split('.')[1]
         const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
         const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=')
@@ -105,7 +112,7 @@ export const pollAPI = {
     }
     if (voterId) headers['X-Voter-Id'] = voterId
 
-    return fetch(`${API_URL}/polls/vote`, {
+    return fetch('/api/polls/vote', {
       method: 'POST',
       headers,
       body: JSON.stringify(data),
@@ -113,7 +120,7 @@ export const pollAPI = {
   },
 
   toggle: (id, isActive, token) =>
-    fetch(`${API_URL}/polls/${id}/toggle`, {
+    fetch(`/api/polls/${id}/toggle`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -123,7 +130,7 @@ export const pollAPI = {
     }).then(res => res.json()),
 
   delete: (id, token) =>
-    fetch(`${API_URL}/polls/${id}`, {
+    fetch(`/api/polls/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => res.json()),
@@ -135,27 +142,47 @@ export function useWebSocket(pollId, onMessage) {
 
   useEffect(() => {
     if (!pollId) return
+
     const token = localStorage.getItem('token')
     const wsUrl = `${WS_URL}?pollId=${pollId}`
 
     const connect = () => {
       const ws = new WebSocket(wsUrl)
       wsRef.current = ws
-      ws.onopen = () => console.log('WebSocket connected')
-      ws.onmessage = (event) => {
-        try { onMessage && onMessage(JSON.parse(event.data)) }
-        catch (e) { console.error('WebSocket parse error:', e) }
+
+      ws.onopen = () => {
+        console.log('WebSocket connected')
       }
-      ws.onerror = (err) => console.error('WebSocket error:', err)
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data)
+          onMessage && onMessage(msg)
+        } catch (e) {
+          console.error('WebSocket message parse error:', e)
+        }
+      }
+
+      ws.onerror = (err) => {
+        console.error('WebSocket error:', err)
+      }
+
       ws.onclose = () => {
-        console.log('WebSocket reconnecting in 3s...')
+        console.log('WebSocket disconnected, reconnecting in 3s...')
         reconnectTimeoutRef.current = setTimeout(connect, 3000)
       }
     }
+
     connect()
+
     return () => {
-      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
-      if (wsRef.current) { wsRef.current.close(); wsRef.current = null }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+      }
+      if (wsRef.current) {
+        wsRef.current.close()
+        wsRef.current = null
+      }
     }
   }, [pollId, onMessage])
 }
