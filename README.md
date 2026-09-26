@@ -1,198 +1,132 @@
 # Pollaris - Live Polling Tool
 
-A real-time polling application where creators make polls, share links, and audiences vote — with results updating live for everyone watching.
+A real-time polling platform where users create polls, share links, and audiences vote with live-updating results. Built with React, Go (Gin), MongoDB, and Redis.
 
 ## Tech Stack
 
-| Layer   | Technology |
-|---------|------------|
-| Frontend | React 18 + Vite + Tailwind CSS + Recharts |
-| Backend  | Go 1.23 + Gin framework |
-| Database | MongoDB (poll/poll data persistence) |
-| Realtime | Redis (live vote counters + WebSocket broadcast) |
+| Layer | Technology | Role |
+|-------|-----------|------|
+| Frontend | React 18 + React Router | UI, voting, live results display |
+| Backend | Go + Gin | REST API, WebSocket server, business logic |
+| Database | MongoDB | Persistent poll storage, vote records |
+| Realtime | Redis | Live vote counters, WebSocket pub/sub |
 
-## Architecture
+## Key Architecture Decisions
 
-```
-┌─────────────────────────────────────────────────────┐
-│                   Frontend (React)                    │
-│  Port 3000                                            │
-│  - Auth pages (Login/Register)                        │
-│  - Poll creation form                                 │
-│  - Live poll view with real-time bar charts           │
-│  - WebSocket client for live updates                  │
-└──────────────────────┬────────────────────────────────┘
-                       │ HTTP/WS
-┌──────────────────────▼────────────────────────────────┐
-│                   Backend (Go/Gin)                     │
-│  Port 8080                                            │
-│  - JWT authentication middleware                      │
-│  - REST API: CRUD polls, cast votes                   │
-│  - WebSocket hub: broadcast live updates              │
-│  - Input validation on every request                  │
-└──────┬──────────────────────┬──────────────────────────┘
-       │                      │
-┌──────▼──────────┐   ┌───────▼─────────────────────────┐
-│   MongoDB       │   │   Redis                          │
-│  Port 27017     │   │   Port 6379                      │
-│  - Users        │   │   - Vote counters (INCR)         │
-│  - Polls        │   │   - Voter dedup (SADD/SISMEMBER) │
-│  - Votes        │   │   - Pub/Sub for WebSocket relay  │
-└─────────────────┘   └──────────────────────────────────┘
-```
+### 1. CORS-first architecture
+The backend sends `Access-Control-Allow-Origin: *`, so the frontend calls the backend **directly** via absolute URLs baked in at build time. No nginx proxy layer is needed, eliminating a fragile link in the chain.
 
-## Data Flow
+### 2. Absolute URLs via `import.meta.env`
+`VITE_API_URL` is set during the Docker build (via `ARG` → `.env` in the image). This bakes the backend URL directly into the JavaScript bundle. When the backend redeploys with a new Cloud Run URL, we just update `.env.example` and rebuild.
 
-1. **Create Poll**: Authenticated user sends POST /api/polls → saved to MongoDB, Redis keys initialized
-2. **Share Link**: Creator shares `/poll/:id` URL
-3. **Audience Votes**: Visitor opens poll page → votes via POST /api/polls/vote → vote recorded in both MongoDB AND Redis atomically
-4. **Live Results**: Every vote triggers WebSocket broadcast → all connected clients receive update instantly via Recharts
+### 3. Redis drives live updates
+- `RecordVote()` uses `INCR` (atomic counter) per option — live vote counts
+- `MarkVoted()` uses `SADD` — tracks who voted
+- `GetPollResults()` reads from Redis in O(1) per option
+- WebSocket broadcaster pushes updates to all connected clients
+- `RebuildRedisFromMongo()` recovers vote counts on container restart
 
-Redis is the **single source of truth for live counts** — every API response reads from Redis, not MongoDB.
+### 4. Results visibility
+Results are hidden until the viewer has voted (privacy), or if the poll has zero votes (nothing to show). After voting, results appear with animated progress bars.
 
 ## Project Structure
 
 ```
 Pollaris/
-├── frontend/
+├── frontend/                    # React app
+│   ├── public/
 │   ├── src/
-│   │   ├── components/       # Reusable UI components
-│   │   ├── pages/            # Login, Register, CreatePoll, PollView
-│   │   ├── context/          # AuthContext for JWT management
-│   │   ├── hooks/            # useWebSocket for live updates
-│   │   ├── services/         # API client + WebSocket client
-│   │   ├── App.jsx           # Router setup
-│   │   └── main.jsx          # Entry point
-│   ├── index.html
-│   ├── vite.config.js        # Dev server + API proxy
-│   ├── tailwind.config.js
-│   ├── nginx.conf            # Production reverse proxy
-│   └── Dockerfile            # Multi-stage build → nginx:alpine
-│
-├── backend/
-│   ├── cmd/server/
-│   │   └── main.go           # Entry point, routing, env config
+│   │   ├── components/          # Navbar, shared UI
+│   │   ├── pages/               # Home, Login, Register, Dashboard, PollDetail
+│   │   ├── context/             # AuthContext (JWT management)
+│   │   ├── services/            # API client + WebSocket hook
+│   │   ├── App.jsx              # Routing
+│   │   ├── main.jsx             # Entry point
+│   │   └── index.css            # Global styles
+│   ├── .env.example             # Set VITE_API_URL for production
+│   ├── Dockerfile               # Multi-stage: Node build → nginx serve
+│   ├── vite.config.js           # Dev proxy to backend
+│   └── package.json
+├── backend/                     # Go service
+│   ├── cmd/server/              # main.go (entry point)
 │   ├── internal/
-│   │   ├── database/
-│   │   │   ├── mongo.go      # MongoDB connection (singleton)
-│   │   │   └── redis.go      # Redis connection (singleton)
-│   │   ├── handlers/
-│   │   │   └── handlers.go   # All HTTP + WebSocket handlers
-│   │   ├── middleware/
-│   │   │   └── auth.go       # JWT validation middleware
-│   │   ├── models/
-│   │   │   ├── models.go     # Domain models (User, Poll, Vote)
-│   │   │   └── dto.go        # Request/Response DTOs
-│   │   ├── repository/
-│   │   │   └── repo.go       # MongoDB data access layer
-│   │   ├── services/
-│   │   │   └── poll.go       # Redis operations + WebSocket hub
-│   │   └── utils/
-│   │       └── jwt.go        # JWT generate/verify + password hash
-│   ├── Dockerfile            # Multi-stage Go build
-│   ├── go.mod
-│   └── .env.example
-│
-└── docker-compose.yml        # Orchestration for all 4 services
+│   │   ├── handlers/            # HTTP + WebSocket handlers
+│   │   ├── models/              # MongoDB models + DTOs
+│   │   ├── services/            # Business logic (Redis, WebSocket)
+│   │   ├── repository/          # MongoDB data access
+│   │   └── middleware/           # CORS, Auth
+│   ├── .env
+│   └── Dockerfile
+└── cloudbuild.yaml              # Cloud Build CI/CD
 ```
 
-## Prerequisites
+## Environment Variables
 
-- Node.js >= 18
-- Go >= 1.23
-- MongoDB >= 7.0
-- Redis >= 7.0
-- Docker & Docker Compose (optional, for containerized deployment)
-
-## Quick Start (Local Development)
-
-### Option A: Docker Compose (Recommended)
-
-```bash
-# 1. Clone the repo
-cd Pollaris
-
-# 2. Start all services
-docker compose up --build
-
-# 3. Access the app
-# Frontend: http://localhost:3000
-# Backend:  http://localhost:8080
+### Backend
+```
+MONGO_URI=<MongoDB connection string>
+REDIS_ADDR=<Redis connection string>
+JWT_SECRET=<JWT signing secret>
 ```
 
-### Option B: Local Development
+### Frontend
+```
+VITE_API_URL=https://pollaris-backend-4dtpsxgjta-uc.a.run.app
+```
 
+## How to Run Locally
+
+### Prerequisites
+- Node.js 20+, Go 1.21+
+- MongoDB Atlas (or local instance)
+- Redis (local or cloud)
+
+### Backend
 ```bash
-# Terminal 1: Start Redis
-redis-server
-
-# Terminal 2: Start MongoDB
-mongod --dbpath /tmp/mongodb
-
-# Terminal 3: Start Backend
 cd backend
-go build -o server ./cmd/server/
-PORT=8080 \
-MONGO_URI=mongodb://localhost:27017/pollaris \
-REDIS_ADDR=localhost:6379 \
-REDIS_PASSWORD="" \
-JWT_SECRET=pollaris-dev-secret-key-2024 \
-./server
+cp .env.example .env
+# Edit .env with your MongoDB and Redis URIs
+go mod download
+go run cmd/server/main.go
+```
 
-# Terminal 4: Start Frontend
+### Frontend (development)
+```bash
 cd frontend
+cp .env.example .env
+# Set VITE_API_URL to your local backend, e.g. http://localhost:8080
 npm install
 npm run dev
 ```
 
-## API Endpoints
+## Core API Endpoints
 
-### Authentication
-| Method | Endpoint           | Auth | Description         |
-|--------|-------------------|------|---------------------|
-| POST   | /api/auth/register | No   | Create account      |
-| POST   | /api/auth/login    | No   | Login, get JWT      |
-| GET    | /api/auth/me       | Yes  | Get current user    |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/api/auth/register` | No | Create account |
+| POST | `/api/auth/login` | No | Login, get JWT |
+| POST | `/api/auth/google` | No | Google Sign-In |
+| GET | `/api/auth/me` | Yes | Current user info |
+| GET | `/api/polls` | No | List all active polls |
+| GET | `/api/polls/:id` | No | Single poll (hides results until you vote) |
+| POST | `/api/polls` | Yes | Create a poll |
+| POST | `/api/polls/vote` | Yes | Cast a vote |
+| GET | `/api/polls/my` | Yes | Creator's polls |
+| GET | `/api/polls/my-votes` | Yes | Polls user voted on |
+| PUT | `/api/polls/:id/toggle` | Yes | Open/close a poll |
+| DELETE | `/api/polls/:id` | Yes | Delete a poll |
 
-### Polls
-| Method | Endpoint           | Auth | Description          |
-|--------|-------------------|------|----------------------|
-| GET    | /api/polls         | No   | List all active polls|
-| GET    | /api/polls/:id     | No   | Get poll with results|
-| POST   | /api/polls         | Yes  | Create new poll      |
-| POST   | /api/polls/vote    | No   | Cast a vote          |
-| GET    | /api/polls/my      | Yes  | Get my polls         |
-| PUT    | /api/polls/:id/toggle | Yes | Toggle poll active  |
+## WebSocket
 
-### WebSocket
-| Endpoint | Description                    |
-|----------|--------------------------------|
-| GET /ws?pollId=<id>&username=<name> | Live poll updates |
+Connect to `/ws?pollId=<pollID>` to receive real-time updates:
+```json
+{ "type": "poll_update", "payload": { "totalVotes": 5, "options": [...] } }
+```
 
-## Key Design Decisions
+## Deployment
 
-1. **Redis as live count source**: Every `GetPoll` and `GetAllPolls` reads vote counts from Redis (`INCR` counters), not MongoDB. This makes the API itself fast and always returns live numbers.
+Uses Google Cloud Build + Cloud Run. The `cloudbuild.yaml` builds both frontend and backend, then deploys them.
 
-2. **Atomic writes**: Each vote writes to MongoDB (permanent record) AND Redis (live counter) in a single handler. No eventual consistency issues.
+## Author Notes
 
-3. **Voter deduplication**: Uses IP + User-Agent hash stored in a Redis Set (`SADD`/`SISMEMBER`) — fast, no extra DB queries.
-
-4. **WebSocket broadcast**: On every vote, `BroadcastUpdate` pushes the new totals to all connected clients watching that poll. Frontend uses `useWebSocket` hook to auto-update Recharts.
-
-5. **Separation of concerns**: Each backend layer (handlers → services → repository) is in its own file/package. Frontend has dedicated `services/`, `hooks/`, `context/` directories.
-
-6. **Backend validation**: Every input is validated server-side via Gin's binding (`binding:"required,min=..."`) AND manual checks. Frontend validation is UX-only; backend is the authority.
-
-## Environment Variables
-
-| Variable        | Default                              | Description           |
-|-----------------|--------------------------------------|-----------------------|
-| PORT            | 8080                                 | Backend port          |
-| MONGO_URI       | mongodb://localhost:27017/pollaris   | MongoDB connection    |
-| REDIS_ADDR      | localhost:6379                       | Redis address         |
-| REDIS_PASSWORD  | (empty)                              | Redis password        |
-| JWT_SECRET      | (required)                           | JWT signing key       |
-
-## License
-
-MIT
+This project was built for the GUVI Developer Internship task. The live app is at https://pollaris-frontend-1061288659823.us-central1.run.app
