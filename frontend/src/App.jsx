@@ -6,6 +6,7 @@ import CreatePoll from './pages/CreatePoll'
 import PollDetail from './pages/PollDetail'
 import Dashboard from './pages/Dashboard'
 import MyPolls from './pages/MyPolls'
+import BrowsePolls from './pages/BrowsePolls'
 import ProtectedRoute from './components/ProtectedRoute'
 import { useAuth } from './context/AuthContext'
 
@@ -26,7 +27,7 @@ function AppContent() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/poll/:id" element={<PollDetail />} />
-      <Route path="/polls" element={<Home />} />
+      <Route path="/polls" element={<BrowsePolls />} />
       <Route
         path="/create"
         element={

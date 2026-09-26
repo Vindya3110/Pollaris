@@ -4,9 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { pollAPI } from '../services/api'
 import Navbar from '../components/Navbar'
 import {
-  BarChart3, Plus, Users, Vote, Clock, ArrowRight,
-  ChevronRight, TrendingUp, Activity, ExternalLink,
-  BarChart, PieChart, MousePointerClick
+  BarChart3, Plus, Users, Vote, MousePointerClick, Activity, ArrowRight,
 } from 'lucide-react'
 
 export default function Dashboard() {
@@ -14,9 +12,9 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const [myPolls, setMyPolls] = useState([])
   const [votedPolls, setVotedPolls] = useState([])
-  const [activePolls, setActivePolls] = useState([])
+  const [allPolls, setAllPolls] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('created')
+  const [activeTab, setActiveTab] = useState('discover')
 
   useEffect(() => {
     fetchData()
@@ -25,23 +23,25 @@ export default function Dashboard() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const myRes = await pollAPI.getMyPolls(token)
+      const [myRes, votedRes, allRes] = await Promise.all([
+        pollAPI.getMyPolls(token),
+        pollAPI.getMyVotes(token),
+        pollAPI.getAll(),
+      ])
       setMyPolls(myRes.polls || [])
-
-      const votedRes = await pollAPI.getMyVotes(token)
       setVotedPolls(votedRes.polls || [])
-
-      const allRes = await pollAPI.getAllPolls()
-      setActivePolls(allRes.polls || [])
+      setAllPolls(allRes.polls || [])
     } catch (err) {
       console.error(err)
     }
     setLoading(false)
   }
 
-  const totalVotes = myPolls.reduce((sum, p) => sum + p.totalVotes, 0)
-  const activeCount = myPolls.filter(p => p.totalVotes > 0).length
-  const totalPolls = myPolls.length
+  const globalTotalVotes = allPolls.reduce((sum, p) => sum + (p.totalVotes || 0), 0)
+  const totalPollsCreated = myPolls.length
+  const votedPollCount = votedPolls.length
+  const totalPollCount = allPolls.length
+  const activePollCount = allPolls.filter(p => p.isActive).length
 
   const formatDate = (dateStr) => {
     const d = new Date(dateStr)
@@ -50,7 +50,7 @@ export default function Dashboard() {
 
   const getLeadingOption = (poll) => {
     if (!poll.options || poll.options.length === 0) return null
-    return poll.options.reduce((a, b) => a.voteCount > b.voteCount ? a : b)
+    return poll.options.reduce((a, b) => (a.voteCount || 0) > (b.voteCount || 0) ? a : b)
   }
 
   return (
@@ -66,13 +66,13 @@ export default function Dashboard() {
           <p className="text-indigo-200/60">Here's what's happening with your polls</p>
         </div>
 
-        {/* Stats cards */}
+        {/* Stats cards — show global stats, not just creator's own */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'Total Polls', value: totalPolls, icon: <BarChart3 className="w-5 h-5" />, color: 'from-blue-500 to-cyan-500' },
-            { label: 'Active Polls', value: activeCount, icon: <Activity className="w-5 h-5" />, color: 'from-green-500 to-emerald-500' },
-            { label: 'Total Votes', value: totalVotes, icon: <Vote className="w-5 h-5" />, color: 'from-purple-500 to-pink-500' },
-            { label: 'Voted On', value: votedPolls.length, icon: <MousePointerClick className="w-5 h-5" />, color: 'from-orange-500 to-amber-500' },
+            { label: 'Total Polls', value: totalPollCount, icon: <BarChart3 className="w-5 h-5" />, color: 'from-blue-500 to-cyan-500' },
+            { label: 'Active Polls', value: activePollCount, icon: <Activity className="w-5 h-5" />, color: 'from-green-500 to-emerald-500' },
+            { label: 'Total Votes', value: globalTotalVotes, icon: <Vote className="w-5 h-5" />, color: 'from-purple-500 to-pink-500' },
+            { label: 'You Created', value: totalPollsCreated, icon: <MousePointerClick className="w-5 h-5" />, color: 'from-orange-500 to-amber-500' },
           ].map((stat) => (
             <div key={stat.label} className="glass rounded-2xl p-5 animate-fade-in-up">
               <div className={`inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br ${stat.color} text-white mb-3 shadow-lg`}>
@@ -106,8 +106,8 @@ export default function Dashboard() {
         <div className="flex gap-1 mb-6 bg-white/5 p-1 rounded-xl w-fit">
           {[
             { key: 'created', label: 'My Polls', count: myPolls.length },
-            { key: 'voted', label: 'Voted Polls', count: votedPolls.length },
-            { key: 'discover', label: 'Discover', count: activePolls.length },
+            { key: 'voted', label: 'Voted Polls', count: votedPollCount },
+            { key: 'discover', label: 'All Polls', count: totalPollCount },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -167,9 +167,9 @@ export default function Dashboard() {
               )
             )}
 
-            {/* Discover */}
+            {/* All Polls (discover) */}
             {activeTab === 'discover' && (
-              activePolls.length === 0 ? (
+              allPolls.length === 0 ? (
                 <EmptyState
                   icon={<Users className="w-12 h-12" />}
                   title="No active polls"
@@ -177,7 +177,7 @@ export default function Dashboard() {
                   action={{ label: 'Create Poll', to: '/create' }}
                 />
               ) : (
-                activePolls.map((poll, i) => (
+                allPolls.map((poll, i) => (
                   <PollCard key={poll.pollId} poll={poll} index={i} type="discover" formatDate={formatDate} getLeadingOption={getLeadingOption} />
                 ))
               )
@@ -189,9 +189,8 @@ export default function Dashboard() {
   )
 }
 
-/* ─── Sub-components ─── */
-
 function PollCard({ poll, index, type, formatDate, getLeadingOption }) {
+  const navigate = useNavigate()
   const [hovered, setHovered] = useState(false)
   const leading = getLeadingOption(poll)
   const total = poll.totalVotes || 0
@@ -215,6 +214,13 @@ function PollCard({ poll, index, type, formatDate, getLeadingOption }) {
             {type === 'voted' && (
               <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-300 font-medium">
                 Voted
+              </span>
+            )}
+            {type === 'discover' && (
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                poll.isActive ? 'bg-green-500/20 text-green-300' : 'bg-amber-500/20 text-amber-300'
+              }`}>
+                {poll.isActive ? 'Active' : 'Closed'}
               </span>
             )}
             <span className="text-xs text-indigo-200/40 flex items-center gap-1">
