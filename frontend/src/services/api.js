@@ -71,7 +71,7 @@ export const pollAPI = {
     return fetch(`${API_URL}/polls/${id}`, { headers }).then(res => res.json())
   },
 
-  getMy: (token) =>
+  getMyPolls: (token) =>
     fetch(`${API_URL}/polls/my`, {
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => res.json()),

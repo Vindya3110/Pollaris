@@ -30,7 +30,7 @@ export default function Register() {
     if (res.token) {
       login(res.token, res.user)
       toast.success('Account created successfully!')
-      navigate('/')
+      setTimeout(() => navigate('/'), 50)
     } else {
       toast.error(res.error || 'Registration failed')
     }

@@ -1,15 +1,28 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
+const API_BASE = import.meta.env.VITE_API_URL || ''
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState(() => {
+    try {
+      const cached = localStorage.getItem('user')
+      return cached ? JSON.parse(cached) : null
+    } catch {
+      return null
+    }
+  })
   const [token, setToken] = useState(() => localStorage.getItem('token'))
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (token) {
-      fetch('/api/auth/me', {
+      // If we have a cached user, skip the fetch — don't waste a request on load
+      if (user) {
+        setLoading(false)
+        return
+      }
+      fetch(`${API_BASE}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then(res => {
@@ -26,13 +39,12 @@ export function AuthProvider({ children }) {
         .then(data => {
           if (data && data.id) {
             setUser(data)
+            localStorage.setItem('user', JSON.stringify(data))
           }
         })
         .catch(() => {
-          localStorage.removeItem('token')
-          localStorage.removeItem('user')
-          setToken(null)
-          setUser(null)
+          // Don't wipe the user on network error — keep them logged in
+          setLoading(false)
         })
         .finally(() => setLoading(false))
     } else {
@@ -68,3 +80,5 @@ export function useAuth() {
   }
   return context
 }
+
+// deploy 1790404800

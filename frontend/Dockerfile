@@ -3,6 +3,10 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Cache bust — timestamp ensures fresh build
+ARG BUILD_TIME=20260926-v2
+RUN echo "Build: $BUILD_TIME"
+
 COPY package.json package-lock.json* ./
 RUN npm install
 

@@ -30,7 +30,7 @@ export default function Login() {
     if (res.token) {
       login(res.token, res.user)
       toast.success('Welcome back!')
-      navigate('/')
+      setTimeout(() => navigate('/'), 50)
     } else {
       toast.error(res.error || 'Login failed')
     }

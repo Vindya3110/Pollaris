@@ -19,7 +19,7 @@ export default function MyPolls() {
 
   const loadPolls = async () => {
     try {
-      const res = await pollAPI.getMy(token)
+      const res = await pollAPI.getMyPolls(token)
       if (res.polls) {
         setPolls(res.polls)
       }

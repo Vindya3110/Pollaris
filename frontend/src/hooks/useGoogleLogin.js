@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { authAPI } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
+import { useNavigate } from 'react-router-dom'
 
 // Load Google Identity Services script once
 let googleScriptLoaded = false
@@ -30,6 +31,7 @@ function loadGoogleScript() {
 export function useGoogleLogin() {
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
+  const navigate = useNavigate()
 
   const handleGoogleSuccess = useCallback(async (credentialResponse) => {
     setLoading(true)
@@ -40,6 +42,7 @@ export function useGoogleLogin() {
       if (res.token) {
         login(res.token, res.user)
         toast.success(`Welcome, ${res.user.name}!`)
+        setTimeout(() => navigate('/'), 100)
       } else {
         toast.error(res.error || 'Google sign-in failed')
       }
@@ -48,7 +51,7 @@ export function useGoogleLogin() {
     } finally {
       setLoading(false)
     }
-  }, [login])
+  }, [login, navigate])
 
   const initGoogle = useCallback(async (elementId, clientId) => {
     try {
