@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
-const API_BASE = import.meta.env.VITE_API_URL || ''
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
@@ -17,17 +16,15 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (token) {
-      // If we have a cached user, skip the fetch — don't waste a request on load
       if (user) {
         setLoading(false)
         return
       }
-      fetch(`${API_BASE}/api/auth/me`, {
+      fetch('/api/auth/me', {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then(res => {
           if (!res.ok) {
-            // Token expired or invalid — clean up
             localStorage.removeItem('token')
             localStorage.removeItem('user')
             setToken(null)
@@ -43,20 +40,64 @@ export function AuthProvider({ children }) {
           }
         })
         .catch(() => {
-          // Don't wipe the user on network error — keep them logged in
           setLoading(false)
         })
         .finally(() => setLoading(false))
     } else {
       setLoading(false)
     }
-  }, [token])
+  }, [token, user])
 
-  const login = (newToken, userData) => {
-    localStorage.setItem('token', newToken)
-    localStorage.setItem('user', JSON.stringify(userData))
-    setToken(newToken)
-    setUser(userData)
+  const login = async (email, password) => {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+    const data = await res.json()
+    if (data.token) {
+      localStorage.setItem('token', data.token)
+      setToken(data.token)
+      setUser(data.user)
+      localStorage.setItem('user', JSON.stringify(data.user))
+    }
+    // Small delay so the Loading screen can update to show Dashboard
+    await new Promise(r => setTimeout(r, 50))
+    window.location.assign('/')
+  }
+
+  const register = async (name, email, password) => {
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password }),
+    })
+    const data = await res.json()
+    if (data.token) {
+      localStorage.setItem('token', data.token)
+      setToken(data.token)
+      setUser(data.user)
+      localStorage.setItem('user', JSON.stringify(data.user))
+    }
+    await new Promise(r => setTimeout(r, 50))
+    window.location.assign('/')
+  }
+
+  const googleLogin = async (idToken) => {
+    const res = await fetch('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken }),
+    })
+    const data = await res.json()
+    if (data.token) {
+      localStorage.setItem('token', data.token)
+      setToken(data.token)
+      setUser(data.user)
+      localStorage.setItem('user', JSON.stringify(data.user))
+    }
+    await new Promise(r => setTimeout(r, 50))
+    window.location.assign('/')
   }
 
   const logout = () => {
@@ -67,18 +108,14 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, googleLogin, logout }}>
       {children}
     </AuthContext.Provider>
   )
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error('useAuth must be used inside AuthProvider')
+  return ctx
 }
-
-// deploy 1790404800

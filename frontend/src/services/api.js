@@ -1,7 +1,12 @@
 import { useEffect, useRef } from 'react'
 
-const API_URL = `${import.meta.env.VITE_API_URL || ''}/api`
-const WS_URL = (import.meta.env.VITE_API_URL || '').replace(/^http/, 'ws')
+// All API calls use relative paths — nginx proxies /api/* to the backend
+const API_URL = '/api'
+const WS_URL = (() => {
+  // Determine WS protocol from current page
+  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  return `${proto}//${window.location.host}/ws`
+})()
 
 export const authAPI = {
   register: (data) =>
@@ -148,7 +153,7 @@ export function useWebSocket(pollId, onMessage) {
     if (!pollId) return
 
     const token = localStorage.getItem('token')
-    const wsUrl = `${WS_URL}/ws?pollId=${pollId}`
+    const wsUrl = `${WS_URL}?pollId=${pollId}`
 
     const connect = () => {
       const ws = new WebSocket(wsUrl)
