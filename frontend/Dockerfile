@@ -1,4 +1,4 @@
-# Build stage — built on your local machine
+# Build stage
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -7,9 +7,7 @@ COPY package.json package-lock.json* ./
 RUN npm install
 
 COPY . .
-# Clear any local .env that would override the build-arg VITE_API_URL
-RUN rm -f .env && rm -rf dist && \
-    VITE_API_URL=${VITE_API_URL} npm run build
+RUN rm -rf dist && npm run build
 
 # Final stage
 FROM nginx:alpine
