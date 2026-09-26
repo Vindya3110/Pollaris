@@ -174,7 +174,14 @@ func HasUserVoted(ctx context.Context, pollID, voterID string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	count, err := database.GetDB().Collection("votes").CountDocuments(ctx, bson.M{"pollId": pollOID, "voterId": voterID})
+	query := bson.M{
+		"pollId": pollOID,
+		"$or": []bson.M{
+			{"voterId": voterID},
+			{"voterId": "user_" + voterID},
+		},
+	}
+	count, err := database.GetDB().Collection("votes").CountDocuments(ctx, query)
 	if err != nil {
 		return false, err
 	}
@@ -193,7 +200,13 @@ func CreateVote(ctx context.Context, vote *models.Vote) error {
 
 // FindPollsVotedBy returns all polls that a specific voter has voted on
 func FindPollsVotedBy(ctx context.Context, voterID string) ([]models.Poll, error) {
-	cursor, err := database.GetDB().Collection("votes").Find(ctx, bson.M{"voterId": voterID})
+	query := bson.M{
+		"$or": []bson.M{
+			{"voterId": voterID},
+			{"voterId": "user_" + voterID},
+		},
+	}
+	cursor, err := database.GetDB().Collection("votes").Find(ctx, query)
 	if err != nil {
 		return nil, err
 	}

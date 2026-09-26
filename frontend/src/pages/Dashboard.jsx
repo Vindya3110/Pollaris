@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { pollAPI } from '../services/api'
 import Navbar from '../components/Navbar'
 import {
-  BarChart3, Plus, Vote, MousePointerClick, Activity, ArrowRight, Clock,
+  BarChart3, Plus, Vote, MousePointerClick, Activity, Clock, ArrowRight,
 } from 'lucide-react'
 
 export default function Dashboard() {
@@ -12,7 +12,6 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const [myPolls, setMyPolls] = useState([])
   const [votedPolls, setVotedPolls] = useState([])
-  const [allPolls, setAllPolls] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('created')
 
@@ -23,25 +22,23 @@ export default function Dashboard() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const [myRes, votedRes, allRes] = await Promise.all([
+      const [myRes, votedRes] = await Promise.all([
         pollAPI.getMyPolls(token),
         pollAPI.getMyVotes(token),
-        pollAPI.getAll(),
       ])
       setMyPolls(myRes.polls || [])
       setVotedPolls(votedRes.polls || [])
-      setAllPolls(allRes.polls || [])
     } catch (err) {
       console.error(err)
     }
     setLoading(false)
   }
 
-  // Stats match the currently active tab so numbers are consistent
-  const displayedPolls = activeTab === 'voted' ? votedPolls : myPolls
-  const totalVotesShown = displayedPolls.reduce((sum, p) => sum + (p.totalVotes || 0), 0)
-  const activeShown = displayedPolls.filter(p => p.isActive).length
-  const totalShown = displayedPolls.length
+  // Stable stats — computed from ALL data, not tied to active tab
+  // so numbers don't jump when switching tabs
+  const totalVotesAll = [...myPolls, ...votedPolls]
+    .reduce((sum, p) => sum + (p.totalVotes || 0), 0)
+  const activeAll = [...myPolls, ...votedPolls].filter(p => p.isActive).length
 
   const formatDate = (dateStr) => {
     const d = new Date(dateStr)
@@ -66,12 +63,13 @@ export default function Dashboard() {
           <p className="text-indigo-200/60">Here's what's happening with your polls</p>
         </div>
 
-        {/* Stats cards — match the active tab so numbers stay consistent */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+        {/* Stats cards — stable, don't change with tabs */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'Total Polls', value: totalShown, icon: <BarChart3 className="w-5 h-5" />, color: 'from-blue-500 to-cyan-500' },
-            { label: 'Active Polls', value: activeShown, icon: <Activity className="w-5 h-5" />, color: 'from-green-500 to-emerald-500' },
-            { label: 'Total Votes', value: totalVotesShown, icon: <Vote className="w-5 h-5" />, color: 'from-purple-500 to-pink-500' },
+            { label: 'Poll Created', value: myPolls.length, icon: <BarChart3 className="w-5 h-5" />, color: 'from-blue-500 to-cyan-500' },
+            { label: 'Voted On', value: votedPolls.length, icon: <Vote className="w-5 h-5" />, color: 'from-purple-500 to-pink-500' },
+            { label: 'Total Votes', value: totalVotesAll, icon: <MousePointerClick className="w-5 h-5" />, color: 'from-green-500 to-emerald-500' },
+            { label: 'Active Polls', value: activeAll, icon: <Activity className="w-5 h-5" />, color: 'from-orange-500 to-amber-500' },
           ].map((stat) => (
             <div key={stat.label} className="glass rounded-2xl p-5 animate-fade-in-up">
               <div className={`inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br ${stat.color} text-white mb-3 shadow-lg`}>
