@@ -1,15 +1,28 @@
+# Build with no-cache to bust Docker layer cache
 steps:
-  # Build backend
+  # Build backend (no cache)
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/pollaris-backend:latest', '-f', 'backend/Dockerfile', 'backend']
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/pollaris-backend:latest']
+    args:
+      - 'build'
+      - '--no-cache'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/pollaris-backend:latest'
+      - '-f'
+      - 'backend/Dockerfile'
+      - 'backend'
 
-  # Build frontend
+  # Build frontend (no cache)
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/pollaris-frontend:latest', '-f', 'frontend/Dockerfile', '--build-arg', 'VITE_API_URL=$_VITE_API_URL', 'frontend']
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/pollaris-frontend:latest']
+    args:
+      - 'build'
+      - '--no-cache'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/pollaris-frontend:latest'
+      - '-f'
+      - 'frontend/Dockerfile'
+      - '--build-arg'
+      - 'VITE_API_URL=$_VITE_API_URL'
+      - 'frontend'
 
 images:
   - 'gcr.io/$PROJECT_ID/pollaris-backend:latest'
