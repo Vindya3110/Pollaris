@@ -7,8 +7,9 @@ COPY package.json package-lock.json* ./
 RUN npm install
 
 COPY . .
-# Clean then rebuild — forces Vite to produce a new chunk hash
-RUN rm -rf dist && npm run build
+# Clear any local .env that would override the build-arg VITE_API_URL
+RUN rm -f .env && rm -rf dist && \
+    VITE_API_URL=${VITE_API_URL} npm run build
 
 # Final stage
 FROM nginx:alpine
