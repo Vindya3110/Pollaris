@@ -62,9 +62,9 @@ export default function PollDetail() {
 
   useEffect(() => {
     if (!id) return
-    const apiUrl = import.meta.env.VITE_API_URL || ''
-    const wsBase = apiUrl.replace(/^http/, 'ws')
-    const wsUrl = `${wsBase}/ws?pollId=${id}`
+    // Use relative path so nginx proxies to backend
+    const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const wsUrl = `${wsProto}//${window.location.host}/ws?pollId=${id}`
     const ws = new WebSocket(wsUrl)
 
     ws.onopen = () => setWsConnected(true)
