@@ -1,40 +1,42 @@
 import { useEffect, useRef } from 'react'
 
-// Use relative API paths — nginx proxies /api/* to the Go backend.
-// For WebSocket, use the same host with ws/wss protocol.
-const WS_URL = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`
+// Production: Cloud Run URL (baked in at build time, stable across redeploys)
+// Development: relative paths proxied by vite.config
+const rawBase = import.meta.env.VITE_API_URL || ''
+const API_URL = rawBase ? `${rawBase}/api` : '/api'
+const WS_URL = rawBase ? `${rawBase.replace(/^http/, 'ws')}/ws` : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`
 
 export const authAPI = {
   register: (data) =>
-    fetch('/api/auth/register', {
+    fetch(`${API_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }).then(res => res.json()),
 
   login: (data) =>
-    fetch('/api/auth/login', {
+    fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }).then(res => res.json()),
 
   googleAuth: (idToken) =>
-    fetch('/api/auth/google', {
+    fetch(`${API_URL}/auth/google`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ idToken }),
     }).then(res => res.json()),
 
   me: (token) =>
-    fetch('/api/auth/me', {
+    fetch(`${API_URL}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => res.json()),
 }
 
 export const pollAPI = {
   create: (data, token) =>
-    fetch('/api/polls', {
+    fetch(`${API_URL}/polls`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -44,10 +46,9 @@ export const pollAPI = {
     }).then(res => res.json()),
 
   getAll: () =>
-    fetch('/api/polls').then(res => res.json()),
+    fetch(`${API_URL}/polls`).then(res => res.json()),
 
   getOne: (id) => {
-    // Send voter ID so backend can check if THIS viewer has voted
     let voterId = ''
     try {
       const token = localStorage.getItem('token')
@@ -66,29 +67,23 @@ export const pollAPI = {
     const headers = {}
     if (voterId) headers['X-Voter-Id'] = voterId
 
-    return fetch(`/api/polls/${id}`, { headers }).then(res => res.json())
+    return fetch(`${API_URL}/polls/${id}`, { headers }).then(res => res.json())
   },
 
   getMyPolls: (token) =>
-    fetch('/api/polls/my', {
+    fetch(`${API_URL}/polls/my`, {
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => res.json()),
 
   getMyVotes: (token) =>
-    fetch('/api/polls/my-votes', {
+    fetch(`${API_URL}/polls/my-votes`, {
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => res.json()),
 
   vote: (data, token) => {
-    // Priority for voter ID:
-    // 1. Authenticated user's account ID — so two different accounts
-    //    in the same browser each get their own vote
-    // 2. Browser-based localStorage ID — for anonymous voters,
-    //    distinguishes different browsers/devices
     let voterId = ''
     try {
       if (token) {
-        // JWT uses base64url encoding; atob() needs standard base64
         const payload = token.split('.')[1]
         const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
         const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=')
@@ -112,7 +107,7 @@ export const pollAPI = {
     }
     if (voterId) headers['X-Voter-Id'] = voterId
 
-    return fetch('/api/polls/vote', {
+    return fetch(`${API_URL}/polls/vote`, {
       method: 'POST',
       headers,
       body: JSON.stringify(data),
@@ -120,7 +115,7 @@ export const pollAPI = {
   },
 
   toggle: (id, isActive, token) =>
-    fetch(`/api/polls/${id}/toggle`, {
+    fetch(`${API_URL}/polls/${id}/toggle`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -130,7 +125,7 @@ export const pollAPI = {
     }).then(res => res.json()),
 
   delete: (id, token) =>
-    fetch(`/api/polls/${id}`, {
+    fetch(`${API_URL}/polls/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => res.json()),

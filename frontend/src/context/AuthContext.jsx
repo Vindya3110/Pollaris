@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { API_URL } from '../services/api'
 
 const AuthContext = createContext(null)
 
