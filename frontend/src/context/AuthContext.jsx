@@ -15,6 +15,15 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem('token'))
   const [loading, setLoading] = useState(true)
 
+  // initializeAuth sets state from an already-authenticated response
+  // (called by pages that already fetched via authAPI)
+  const initializeAuth = (token, user) => {
+    localStorage.setItem('token', token)
+    localStorage.setItem('user', JSON.stringify(user))
+    setToken(token)
+    setUser(user)
+  }
+
   useEffect(() => {
     if (token) {
       if (user) {
@@ -49,55 +58,19 @@ export function AuthProvider({ children }) {
     }
   }, [token, user])
 
-  const login = async (email, password) => {
-    const res = await fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    })
-    const data = await res.json()
-    if (data.token) {
-      localStorage.setItem('token', data.token)
-      setToken(data.token)
-      setUser(data.user)
-      localStorage.setItem('user', JSON.stringify(data.user))
-    }
-    await new Promise(r => setTimeout(r, 50))
-    window.location.assign('/')
+  // login sets auth from already-fetched data (pages call authAPI.login first)
+  const login = (token, user) => {
+    initializeAuth(token, user)
   }
 
-  const register = async (name, email, password) => {
-    const res = await fetch(`${API_URL}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password }),
-    })
-    const data = await res.json()
-    if (data.token) {
-      localStorage.setItem('token', data.token)
-      setToken(data.token)
-      setUser(data.user)
-      localStorage.setItem('user', JSON.stringify(data.user))
-    }
-    await new Promise(r => setTimeout(r, 50))
-    window.location.assign('/')
+  // register sets auth from already-fetched data (pages call authAPI.register first)
+  const register = (token, user) => {
+    initializeAuth(token, user)
   }
 
-  const googleLogin = async (idToken) => {
-    const res = await fetch(`${API_URL}/auth/google`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken }),
-    })
-    const data = await res.json()
-    if (data.token) {
-      localStorage.setItem('token', data.token)
-      setToken(data.token)
-      setUser(data.user)
-      localStorage.setItem('user', JSON.stringify(data.user))
-    }
-    await new Promise(r => setTimeout(r, 50))
-    window.location.assign('/')
+  // googleLogin sets auth from already-fetched data (pages call authAPI.googleAuth first)
+  const googleLogin = (token, user) => {
+    initializeAuth(token, user)
   }
 
   const logout = () => {

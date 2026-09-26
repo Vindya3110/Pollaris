@@ -3,9 +3,10 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Accept VITE_API_URL as build-arg (Cloud Build passes it via substitution)
+# VITE_API_URL is read from .env file by Vite at build time.
+# Cloud Build passes it via --build-arg → written into .env.
 ARG VITE_API_URL
-# Write to .env so Vite picks it up at build time
+ENV VITE_API_URL=${VITE_API_URL}
 RUN echo "VITE_API_URL=${VITE_API_URL}" > .env
 
 COPY package.json package-lock.json* ./
