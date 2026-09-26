@@ -1,12 +1,9 @@
 import { useEffect, useRef } from 'react'
 
-// All API calls use relative paths — nginx proxies /api/* to the backend
-const API_URL = '/api'
-const WS_URL = (() => {
-  // Determine WS protocol from current page
-  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  return `${proto}//${window.location.host}/ws`
-})()
+// API base from Vite build-time env, or empty string as fallback
+const rawBase = import.meta.env.VITE_API_URL || ''
+const API_URL = rawBase ? `${rawBase}/api` : '/api'
+const WS_URL = rawBase ? `${rawBase.replace(/^http/, 'ws')}/ws` : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`
 
 export const authAPI = {
   register: (data) =>
@@ -23,7 +20,6 @@ export const authAPI = {
       body: JSON.stringify(data),
     }).then(res => res.json()),
 
-  // Exchange Google ID token for our app JWT
   googleAuth: (idToken) =>
     fetch(`${API_URL}/auth/google`, {
       method: 'POST',
@@ -52,7 +48,6 @@ export const pollAPI = {
     fetch(`${API_URL}/polls`).then(res => res.json()),
 
   getOne: (id) => {
-    // Send voter ID so backend can check if THIS viewer has voted
     let voterId = ''
     try {
       const token = localStorage.getItem('token')
@@ -66,13 +61,10 @@ export const pollAPI = {
       if (!voterId) {
         voterId = localStorage.getItem('pollaris_voter_id') || ''
       }
-    } catch {
-      // ignore
-    }
+    } catch { /* ignore */ }
 
     const headers = {}
     if (voterId) headers['X-Voter-Id'] = voterId
-
     return fetch(`${API_URL}/polls/${id}`, { headers }).then(res => res.json())
   },
 
@@ -87,15 +79,9 @@ export const pollAPI = {
     }).then(res => res.json()),
 
   vote: (data, token) => {
-    // Priority for voter ID:
-    // 1. Authenticated user's account ID — so two different accounts
-    //    in the same browser each get their own vote
-    // 2. Browser-based localStorage ID — for anonymous voters,
-    //    distinguishes different browsers/devices
     let voterId = ''
     try {
       if (token) {
-        // JWT uses base64url encoding; atob() needs standard base64
         const payload = token.split('.')[1]
         const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
         const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=')
@@ -117,9 +103,7 @@ export const pollAPI = {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     }
-    if (voterId) {
-      headers['X-Voter-Id'] = voterId
-    }
+    if (voterId) headers['X-Voter-Id'] = voterId
 
     return fetch(`${API_URL}/polls/vote`, {
       method: 'POST',
@@ -151,47 +135,27 @@ export function useWebSocket(pollId, onMessage) {
 
   useEffect(() => {
     if (!pollId) return
-
     const token = localStorage.getItem('token')
     const wsUrl = `${WS_URL}?pollId=${pollId}`
 
     const connect = () => {
       const ws = new WebSocket(wsUrl)
       wsRef.current = ws
-
-      ws.onopen = () => {
-        console.log('WebSocket connected')
-      }
-
+      ws.onopen = () => console.log('WebSocket connected')
       ws.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data)
-          onMessage && onMessage(msg)
-        } catch (e) {
-          console.error('WebSocket message parse error:', e)
-        }
+        try { onMessage && onMessage(JSON.parse(event.data)) }
+        catch (e) { console.error('WebSocket parse error:', e) }
       }
-
-      ws.onerror = (err) => {
-        console.error('WebSocket error:', err)
-      }
-
+      ws.onerror = (err) => console.error('WebSocket error:', err)
       ws.onclose = () => {
-        console.log('WebSocket disconnected, reconnecting in 3s...')
+        console.log('WebSocket reconnecting in 3s...')
         reconnectTimeoutRef.current = setTimeout(connect, 3000)
       }
     }
-
     connect()
-
     return () => {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current)
-      }
-      if (wsRef.current) {
-        wsRef.current.close()
-        wsRef.current = null
-      }
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+      if (wsRef.current) { wsRef.current.close(); wsRef.current = null }
     }
   }, [pollId, onMessage])
 }
