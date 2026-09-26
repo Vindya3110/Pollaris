@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { authAPI } from '../services/api'
-import toast from 'react-hot-toast'
+import { pollAPI } from '../services/api'
 import Navbar from '../components/Navbar'
 import {
   BarChart3, Plus, Users, Vote, Clock, ArrowRight,
@@ -26,16 +25,13 @@ export default function Dashboard() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      // Fetch my created polls
-      const myRes = await authAPI.getMyPolls()
+      const myRes = await pollAPI.getMyPolls(token)
       setMyPolls(myRes.polls || [])
 
-      // Fetch polls I voted on
-      const votedRes = await authAPI.getMyVotes()
+      const votedRes = await pollAPI.getMyVotes(token)
       setVotedPolls(votedRes.polls || [])
 
-      // Fetch all active public polls
-      const allRes = await authAPI.getAllPolls()
+      const allRes = await pollAPI.getAllPolls()
       setActivePolls(allRes.polls || [])
     } catch (err) {
       console.error(err)
