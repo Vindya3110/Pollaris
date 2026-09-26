@@ -399,6 +399,29 @@ func GetMyPolls(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"polls": response})
 }
 
+// GetMyVotes returns polls that the current user has voted on
+func GetMyVotes(c *gin.Context) {
+	userID := c.GetString("userId")
+	polls, err := repository.FindPollsVotedBy(c, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.APIError{Error: "Failed to fetch voted polls"})
+		return
+	}
+
+	response := make([]models.PollResult, len(polls))
+	for i, poll := range polls {
+		results, total := services.GetPollResults(poll.ID.Hex(), poll.Options)
+		response[i] = models.PollResult{
+			PollID:     poll.ID.Hex(),
+			Question:   poll.Question,
+			TotalVotes: total,
+			Options:    results,
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"polls": response})
+}
+
 // Vote casts a vote on a poll
 func Vote(c *gin.Context) {
 	var req models.VoteRequest

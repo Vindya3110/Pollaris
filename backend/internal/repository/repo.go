@@ -191,6 +191,46 @@ func CreateVote(ctx context.Context, vote *models.Vote) error {
 	return nil
 }
 
+// FindPollsVotedBy returns all polls that a specific voter has voted on
+func FindPollsVotedBy(ctx context.Context, voterID string) ([]models.Poll, error) {
+	cursor, err := database.GetDB().Collection("votes").Find(ctx, bson.M{"voterId": voterID})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var votes []models.Vote
+	if err := cursor.All(ctx, &votes); err != nil {
+		return nil, err
+	}
+
+	// Dedupe poll IDs
+	seen := make(map[primitive.ObjectID]bool)
+	pollIDs := []primitive.ObjectID{}
+	for _, v := range votes {
+		if !seen[v.PollID] {
+			seen[v.PollID] = true
+			pollIDs = append(pollIDs, v.PollID)
+		}
+	}
+
+	if len(pollIDs) == 0 {
+		return []models.Poll{}, nil
+	}
+
+	pollsCursor, err := database.GetDB().Collection("polls").Find(ctx, bson.M{"_id": bson.M{"$in": pollIDs}})
+	if err != nil {
+		return nil, err
+	}
+	defer pollsCursor.Close(ctx)
+
+	var polls []models.Poll
+	if err := pollsCursor.All(ctx, &polls); err != nil {
+		return nil, err
+	}
+	return polls, nil
+}
+
 // GetVotesForPoll returns all votes for a given poll (used to rebuild Redis on restart)
 func GetVotesForPoll(ctx context.Context, pollID string) ([]models.Vote, error) {
 	pollOID, err := primitive.ObjectIDFromHex(pollID)

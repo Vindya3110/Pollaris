@@ -81,6 +81,7 @@ func main() {
 	{
 		authPolls.POST("", createPollHandler)
 		authPolls.GET("/my", getMyPollsHandler)
+		authPolls.GET("/my-votes", getMyVotesHandler)
 		authPolls.PUT("/:id/toggle", togglePollHandler)
 		authPolls.DELETE("/:id", deletePollHandler)
 	}
@@ -125,6 +126,7 @@ var (
 	getPollHandler   = gin.HandlerFunc(handlers.GetPoll)
 	getAllPollsHandler = gin.HandlerFunc(handlers.GetAllPolls)
 	getMyPollsHandler = gin.HandlerFunc(handlers.GetMyPolls)
+	getMyVotesHandler = gin.HandlerFunc(handlers.GetMyVotes)
 	voteHandler      = gin.HandlerFunc(handlers.Vote)
 	togglePollHandler = gin.HandlerFunc(handlers.TogglePoll)
 	deletePollHandler = gin.HandlerFunc(handlers.DeletePoll)

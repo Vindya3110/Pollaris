@@ -37,7 +37,7 @@ export default function Home() {
                   to="/register"
                   className="btn-primary inline-flex items-center gap-2 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg"
                 >
-                  Get Started Free
+                  Get Started
                   <ArrowRight className="w-5 h-5" />
                 </Link>
               )}
