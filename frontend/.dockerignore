@@ -10,3 +10,4 @@ build/
 .idea/
 Dockerfile
 docker-compose.yml
+.env
