@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { pollAPI } from '../services/api'
+import { pollAPI, WS_URL } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import Navbar from '../components/Navbar'
@@ -62,9 +62,7 @@ export default function PollDetail() {
 
   useEffect(() => {
     if (!id) return
-    const apiUrl = import.meta.env.VITE_API_URL || ''
-    const wsBase = apiUrl ? apiUrl.replace(/^http/, 'ws') : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`
-    const wsUrl = `${wsBase}/ws?pollId=${id}`
+    const wsUrl = `${WS_URL}?pollId=${id}`
     const ws = new WebSocket(wsUrl)
 
     ws.onopen = () => setWsConnected(true)

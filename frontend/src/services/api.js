@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react'
 
-// Production: Cloud Run URL (baked in at build time, stable across redeploys)
-// Development: relative paths proxied by vite.config
-const rawBase = import.meta.env.VITE_API_URL || ''
-const API_URL = rawBase ? `${rawBase}/api` : '/api'
-const WS_URL = rawBase ? `${rawBase.replace(/^http/, 'ws')}/ws` : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`
+// VITE_API_URL is set at build time (baked into the JS bundle).
+// This eliminates the nginx proxy layer — the frontend calls the
+// backend directly using absolute URLs. CORS is already configured
+// on the backend (Access-Control-Allow-Origin: *).
+export const BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+export const API_URL = `${BASE}/api`
+export const WS_URL = `${BASE.replace(/^http/, 'ws')}/ws`
 
 export const authAPI = {
   register: (data) =>
@@ -138,7 +140,6 @@ export function useWebSocket(pollId, onMessage) {
   useEffect(() => {
     if (!pollId) return
 
-    const token = localStorage.getItem('token')
     const wsUrl = `${WS_URL}?pollId=${pollId}`
 
     const connect = () => {
