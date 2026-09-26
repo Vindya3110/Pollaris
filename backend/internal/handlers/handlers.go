@@ -368,7 +368,9 @@ func GetAllPolls(c *gin.Context) {
 		response[i] = models.PollResult{
 			PollID:     poll.ID.Hex(),
 			Question:   poll.Question,
+			IsActive:   poll.IsActive,
 			TotalVotes: total,
+			CreatedAt:  poll.CreatedAt,
 			Options:    results,
 		}
 	}
@@ -391,7 +393,9 @@ func GetMyPolls(c *gin.Context) {
 		response[i] = models.PollResult{
 			PollID:     poll.ID.Hex(),
 			Question:   poll.Question,
+			IsActive:   poll.IsActive,
 			TotalVotes: total,
+			CreatedAt:  poll.CreatedAt,
 			Options:    results,
 		}
 	}
@@ -414,7 +418,9 @@ func GetMyVotes(c *gin.Context) {
 		response[i] = models.PollResult{
 			PollID:     poll.ID.Hex(),
 			Question:   poll.Question,
+			IsActive:   poll.IsActive,
 			TotalVotes: total,
+			CreatedAt:  poll.CreatedAt,
 			Options:    results,
 		}
 	}

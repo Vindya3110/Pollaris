@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 // GoogleAuthRequest for Google OAuth login
 type GoogleAuthRequest struct {
 	IDToken string `json:"idToken" binding:"required"`
@@ -58,10 +60,12 @@ type VoteResult struct {
 
 // PollResult is the full poll with live results
 type PollResult struct {
-	PollID    string       `json:"pollId"`
-	Question  string       `json:"question"`
-	TotalVotes int64       `json:"totalVotes"`
-	Options   []VoteResult `json:"options"`
+	PollID     string       `json:"pollId"`
+	Question   string       `json:"question"`
+	IsActive   bool         `json:"isActive"`
+	TotalVotes int64        `json:"totalVotes"`
+	CreatedAt  time.Time    `json:"createdAt"`
+	Options    []VoteResult `json:"options"`
 }
 
 // APIError is a standard error response
